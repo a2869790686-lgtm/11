@@ -1,4 +1,5 @@
 
+
 import { User, Post, Message } from './types';
 
 export const CURRENT_USER: User = {
@@ -133,5 +134,57 @@ export const MOCK_POSTS_INITIAL: Post[] = [
     likes: ['4', '12'],
     comments: [],
     timestamp: Date.now() - 150000000
+  },
+  // --- New Posts to enrich content ---
+  {
+    id: 'p9',
+    authorId: '12', // Landlord
+    content: '各位租户请注意：明天上午9点小区停水检修，请提前储水。🚰',
+    images: [],
+    likes: ['me', '10'],
+    comments: [
+       { id: 'c9', userId: 'me', userName: 'Leo', content: '收到了', timestamp: Date.now() - 170000000 }
+    ],
+    timestamp: Date.now() - 180000000
+  },
+  {
+    id: 'p10',
+    authorId: '3', // Boss
+    content: '成功的路上并不拥挤，因为坚持的人不多。共勉！⛳️',
+    images: ['https://loremflickr.com/400/300/golf,course?lock=12'],
+    likes: ['me', '4', '10'], // Employees liking it
+    comments: [
+        { id: 'c10', userId: '10', userName: '卷王 (Jack)', content: '老板说的对！受教了。', timestamp: Date.now() - 200000000 }
+    ],
+    timestamp: Date.now() - 210000000
+  },
+  {
+    id: 'p11',
+    authorId: '1', // Family Group
+    content: '分享一首老歌，岁月静好。🎵 [Link: 邓丽君 - 甜蜜蜜]',
+    images: [],
+    likes: ['2', '7'],
+    comments: [],
+    timestamp: Date.now() - 250000000
+  },
+  {
+    id: 'p12',
+    authorId: '9', // Cainiao
+    content: '双11高峰期，驿站包裹滞留较多，请大家尽快错峰取件！📦',
+    images: ['https://loremflickr.com/400/300/warehouse,boxes?lock=13'],
+    likes: [],
+    comments: [],
+    timestamp: Date.now() - 300000000
+  },
+  {
+    id: 'p13',
+    authorId: '5', // momo
+    content: '救命🆘 这家火锅店也太好吃了吧！排队两小时值得！🤤',
+    images: ['https://loremflickr.com/400/400/hotpot,meat?lock=14', 'https://loremflickr.com/400/400/restaurant?lock=15'],
+    likes: ['8', '13'],
+    comments: [
+        { id: 'c13', userId: '8', userName: '老婆', content: '哪家？下次带我去', timestamp: Date.now() - 350000000 }
+    ],
+    timestamp: Date.now() - 360000000
   }
 ];

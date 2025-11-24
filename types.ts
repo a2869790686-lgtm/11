@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   name: string;
@@ -11,11 +12,13 @@ export interface Message {
   id: string;
   senderId: string;
   receiverId: string;
-  content: string; // text content or text-to-read for audio
-  type: 'text' | 'audio';
+  content: string; // text content, note for money, or text-to-read for audio
+  type: 'text' | 'audio' | 'red_packet' | 'transfer' | 'system';
   timestamp: number;
   read: boolean;
   duration?: number; // for audio messages in seconds
+  amount?: string; // for money messages
+  status?: 'sent' | 'accepted' | 'opened'; // Track status for money messages
 }
 
 export interface Comment {
@@ -57,9 +60,14 @@ export type ViewState =
   | { type: 'CHANNELS' }
   | { type: 'SETTINGS' }
   | { type: 'SETTINGS_GENERAL' }
+  | { type: 'SERVICES' }
+  | { type: 'FAVORITES' }
+  | { type: 'STICKER_GALLERY' }
   | { type: 'DISCOVER_SCAN' }
   | { type: 'DISCOVER_SHAKE' }
   | { type: 'DISCOVER_TOP_STORIES' }
   | { type: 'DISCOVER_SEARCH' }
   | { type: 'DISCOVER_GAMES' }
-  | { type: 'DISCOVER_MINI_PROGRAMS' };
+  | { type: 'DISCOVER_MINI_PROGRAMS' }
+  | { type: 'MONEY_RED_PACKET', userId: string }
+  | { type: 'MONEY_TRANSFER', userId: string };

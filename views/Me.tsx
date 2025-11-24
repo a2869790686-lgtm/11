@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState } from '../types';
@@ -8,7 +9,7 @@ import { IconCamera } from '../components/Icons';
 // --- Components ---
 
 const MenuItem = ({ icon, label, value, onClick, isLink = true }: any) => (
-  <div onClick={onClick} className={`flex items-center px-4 py-3 bg-white border-b border-wechat-divider ${onClick ? 'active:bg-gray-100 cursor-pointer' : ''}`}>
+  <div onClick={onClick} className={`flex items-center px-4 py-3 bg-white border-b border-wechat-divider ${onClick ? 'active:bg-gray-50 cursor-pointer' : ''}`}>
     {icon && <div className="w-6 h-6 mr-4 flex items-center justify-center text-xl">{icon}</div>}
     <span className="flex-1 text-base text-black">{label}</span>
     {value && <span className="text-gray-400 mr-2 text-sm">{value}</span>}
@@ -42,12 +43,24 @@ export const Me = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) =>
         </div>
 
         <div className="mb-2">
-            <MenuItem icon="💰" label="Services" />
+            <MenuItem 
+                icon="💰" 
+                label="Services" 
+                onClick={() => onNavigate({ type: 'SERVICES' })}
+            />
         </div>
 
         <div className="mb-2">
-            <MenuItem icon="❤️" label="Favorites" />
-            <MenuItem icon="🖼️" label="Sticker Gallery" />
+            <MenuItem 
+                icon="❤️" 
+                label="Favorites" 
+                onClick={() => onNavigate({ type: 'FAVORITES' })}
+            />
+            <MenuItem 
+                icon="🖼️" 
+                label="Sticker Gallery" 
+                onClick={() => onNavigate({ type: 'STICKER_GALLERY' })}
+            />
             <MenuItem 
                 icon="⚙️" 
                 label="Settings" 

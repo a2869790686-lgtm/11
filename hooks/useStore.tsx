@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Message, Post, ChatSession, Comment } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES } from '../constants';
@@ -10,10 +11,12 @@ interface StoreContextType {
   posts: Post[];
   updateCurrentUser: (updates: Partial<User>) => void;
   addMessage: (msg: Message) => void;
+  updateMessage: (id: string, updates: Partial<Message>) => void;
   markAsRead: (senderId: string) => void;
   addFriend: (phone: string) => boolean;
   deleteFriend: (id: string) => void;
   addPost: (content: string, images: string[]) => void;
+  refreshMoments: () => Promise<void>;
   toggleLike: (postId: string) => void;
   addComment: (postId: string, content: string) => void;
   getChatHistory: (friendId: string) => Message[];
@@ -68,6 +71,10 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
   const addMessage = useCallback((msg: Message) => {
     setMessages(prev => [...prev, msg]);
+  }, []);
+
+  const updateMessage = useCallback((id: string, updates: Partial<Message>) => {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
   }, []);
 
   const markAsRead = useCallback((senderId: string) => {
@@ -127,6 +134,49 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     setPosts(prev => [newPost, ...prev]);
   }, [currentUser.id]);
 
+  const refreshMoments = useCallback(() => {
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        if (friends.length === 0) {
+            resolve();
+            return;
+        }
+        // Generate 1-2 new posts from random friends
+        const count = Math.floor(Math.random() * 2) + 1;
+        const newPosts: Post[] = [];
+        
+        const contentTemplates = [
+          "Just had an amazing coffee! ☕️",
+          "Working hard on the new project. 💻",
+          "The weather is absolutely beautiful today. ☀️",
+          "Can't believe it's already Friday! 🎉",
+          "Check out this view! 🏙",
+          "Life is good. ✨",
+          "Does anyone know a good place for dinner?",
+          "Missing the old days..."
+        ];
+
+        for(let i=0; i<count; i++) {
+            const friend = friends[Math.floor(Math.random() * friends.length)];
+            const hasImage = Math.random() > 0.3;
+            
+            newPosts.push({
+                id: `p_fresh_${Date.now()}_${i}`,
+                authorId: friend.id,
+                content: contentTemplates[Math.floor(Math.random() * contentTemplates.length)],
+                images: hasImage ? [`https://loremflickr.com/400/400/lifestyle,city?lock=${Date.now() + i}`] : [],
+                likes: [],
+                comments: [],
+                timestamp: Date.now()
+            });
+        }
+
+        setPosts(prev => [...newPosts, ...prev]);
+        resolve();
+      }, 1500);
+    });
+  }, [friends]);
+
   const toggleLike = useCallback((postId: string) => {
     setPosts(prev => prev.map(p => {
       if (p.id !== postId) return p;
@@ -165,10 +215,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     // Iterate all messages to build sessions
     messages.forEach(msg => {
       const otherId = msg.senderId === currentUser.id ? msg.receiverId : msg.senderId;
-      // If message is a group chat in future, logic changes. For now 1-on-1.
       
       const friend = friends.find(f => f.id === otherId);
-      // Even if friend deleted, we might show history, but let's stick to existing friends
       if (!friend) return;
 
       if (!sessions[otherId]) {
@@ -203,10 +251,12 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       posts,
       updateCurrentUser,
       addMessage,
+      updateMessage,
       markAsRead,
       addFriend,
       deleteFriend,
       addPost,
+      refreshMoments,
       toggleLike,
       addComment,
       getChatHistory,

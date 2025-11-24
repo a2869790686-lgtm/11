@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export const IconChat = ({ active }: { active?: boolean }) => (
@@ -64,6 +65,14 @@ export const IconFace = () => (
   </svg>
 );
 
+export const IconRefresh = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 4v6h-6"></path>
+      <path d="M1 20v-6h6"></path>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+    </svg>
+);
+
 // New Icons for Discover
 export const IconChannels = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="orange" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -104,5 +113,22 @@ export const IconGames = () => (
 export const IconMiniProgram = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7D90A9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10"></circle><path d="M8 12l2-2 2 2-2 2z" fill="#7D90A9" stroke="none"></path><path d="M14 10h-2v4h2"></path>
+  </svg>
+);
+
+export const IconRedPacket = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+    <path d="M4 6v12a2 2 0 0 0 2 2h14v-4" />
+    <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
+  </svg>
+);
+
+export const IconTransfer = () => (
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 2.1l4 4-4 4" />
+    <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
+    <path d="M7 21.9l-4-4 4-4" />
+    <path d="M21 13v1a4 4 0 0 1-4 4H3" />
   </svg>
 );

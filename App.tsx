@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { StoreProvider } from './hooks/useStore';
 import { Screen } from './components/Layout';
@@ -11,6 +12,10 @@ import { ChatDetail } from './views/ChatDetail';
 import { Moments } from './views/Moments';
 import { Channels } from './views/Channels';
 import { Settings, SettingsGeneral } from './views/Settings';
+import { Services } from './views/Services';
+import { Favorites } from './views/Favorites';
+import { StickerGallery } from './views/StickerGallery';
+import { RedPacketView, TransferView } from './views/WalletFunctions';
 import { IconChat, IconContacts, IconDiscover, IconMe } from './components/Icons';
 import { ViewState } from './types';
 
@@ -59,7 +64,7 @@ const AppContent = () => {
       case 'TAB_ME':
         return <Me onNavigate={handleNavigate} />;
       case 'CHAT_DETAIL':
-        return <ChatDetail userId={viewState.userId} onBack={() => handleNavigate({ type: 'TAB_CHATS' })} />;
+        return <ChatDetail userId={viewState.userId} onBack={() => handleNavigate({ type: 'TAB_CHATS' })} onNavigate={handleNavigate} />;
       case 'MOMENTS':
         return <Moments onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
       case 'CHANNELS':
@@ -76,6 +81,12 @@ const AppContent = () => {
         return <Settings onNavigate={handleNavigate} onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
       case 'SETTINGS_GENERAL':
         return <SettingsGeneral onBack={() => handleNavigate({ type: 'SETTINGS' })} />;
+      case 'SERVICES':
+        return <Services onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
+      case 'FAVORITES':
+        return <Favorites onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
+      case 'STICKER_GALLERY':
+        return <StickerGallery onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
       // New Discover Views
       case 'DISCOVER_SCAN':
         return <ScanView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
@@ -89,6 +100,11 @@ const AppContent = () => {
         return <GamesView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
       case 'DISCOVER_MINI_PROGRAMS':
         return <MiniProgramsView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
+      // Wallet Views
+      case 'MONEY_RED_PACKET':
+        return <RedPacketView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', userId: viewState.userId })} />;
+      case 'MONEY_TRANSFER':
+        return <TransferView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', userId: viewState.userId })} />;
       default:
         return <ChatList onNavigate={handleNavigate} />;
     }

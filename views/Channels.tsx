@@ -1,9 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { IconCamera } from '../components/Icons';
 
-// Mock Data for Channels (Video Feed)
-const MOCK_VIDEOS = [
+interface VideoPost {
+  id: string;
+  author: string;
+  avatar: string;
+  desc: string;
+  likes: string;
+  comments: string;
+  shares: string;
+  cover: string;
+}
+
+// Initial Data
+const INITIAL_VIDEOS: VideoPost[] = [
   {
     id: 'v1',
     author: '萌宠集中营',
@@ -56,7 +67,73 @@ const MOCK_VIDEOS = [
   }
 ];
 
+// Content Generator for Infinite Scroll
+const TOPICS = ['cat', 'food', 'nature', 'city', 'tech', 'people', 'dance', 'art', 'cars', 'sports'];
+const DESCRIPTIONS = [
+    "Wait for the end... 😱",
+    "Daily routine check! ✨",
+    "Can't believe this happened.",
+    "This view is everything 🌅",
+    "Anyone else relate? 😂",
+    "Tutorial: How to do this efficiently.",
+    "Unboxing the new gadget! 📦",
+    "POV: You are here.",
+    "Tag a friend who needs to see this!",
+    "Weekend vibes only 🎵"
+];
+
+const AUTHORS = [
+    "LifeHacker", "TravelBug", "TechReviewer", "DailyDose", "FunnyClips", "ChefSpecial", "ArtStation", "CarManiac"
+];
+
+const generateVideos = (startIdx: number, count: number): VideoPost[] => {
+    return Array.from({ length: count }).map((_, i) => {
+        const seed = startIdx + i;
+        const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+        return {
+            id: `v_gen_${seed}_${Date.now()}`,
+            author: AUTHORS[Math.floor(Math.random() * AUTHORS.length)],
+            avatar: `https://picsum.photos/seed/u_${seed}/100/100`,
+            desc: DESCRIPTIONS[Math.floor(Math.random() * DESCRIPTIONS.length)] + ` #${topic}`,
+            likes: (Math.random() * 50 + 1).toFixed(1) + 'w',
+            comments: Math.floor(Math.random() * 5000).toString(),
+            shares: Math.floor(Math.random() * 2000).toString(),
+            cover: `https://loremflickr.com/400/800/${topic}?lock=${1000 + seed}`
+        };
+    });
+};
+
 export const Channels = ({ onBack }: { onBack: () => void }) => {
+    const [videos, setVideos] = useState<VideoPost[]>(INITIAL_VIDEOS);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const loadingRef = useRef(false);
+
+    const handleScroll = () => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        
+        // Trigger load when within 2 screens of bottom
+        if (scrollHeight - scrollTop - clientHeight < clientHeight * 2) {
+            loadMore();
+        }
+    };
+
+    const loadMore = () => {
+        if (loadingRef.current) return;
+        loadingRef.current = true;
+        
+        // Generate new videos
+        const newBatch = generateVideos(videos.length, 5);
+        setVideos(prev => [...prev, ...newBatch]);
+
+        // Simple debounce
+        setTimeout(() => {
+            loadingRef.current = false;
+        }, 500);
+    };
+
     return (
         <div className="flex flex-col h-full bg-black relative">
             {/* Top Bar Overlay */}
@@ -75,14 +152,19 @@ export const Channels = ({ onBack }: { onBack: () => void }) => {
             </div>
 
             {/* Scrollable Feed Container */}
-            <div className="flex-1 overflow-y-auto snap-y snap-mandatory no-scrollbar bg-black">
-                {MOCK_VIDEOS.map((video) => (
-                    <div key={video.id} className="w-full h-full snap-start relative">
-                        {/* Video Background (Simulated with Image) */}
+            <div 
+                ref={containerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto snap-y snap-mandatory no-scrollbar bg-black"
+            >
+                {videos.map((video) => (
+                    <div key={video.id} className="w-full h-full snap-start relative bg-gray-900 border-b border-gray-800">
+                        {/* Video Background */}
                         <img 
                             src={video.cover} 
                             className="w-full h-full object-cover" 
                             alt="video thumbnail"
+                            loading="lazy"
                         />
                         {/* Dark Gradient Overlay for text readability */}
                         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60 pointer-events-none"></div>
