@@ -37,7 +37,7 @@ export const Me = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) =>
             <h2 className="text-xl font-bold mb-1">{currentUser.name}</h2>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">WeChat ID: {currentUser.wxid}</span>
-              <div className="text-gray-400 text-2xl mb-4">QrCode ></div>
+              <div className="text-gray-400 text-2xl mb-4">QrCode &gt;</div>
             </div>
           </div>
         </div>

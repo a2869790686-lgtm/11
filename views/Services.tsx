@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Header, ScrollArea } from '../components/Layout';
 import { IconMore } from '../components/Icons';
@@ -34,7 +35,7 @@ export const Services = ({ onBack }: { onBack: () => void }) => {
                                 <span className="text-2xl mr-2">💰</span>
                                 <span className="font-medium text-lg">Money</span>
                             </div>
-                            <span className="text-sm opacity-80">Wallet ></span>
+                            <span className="text-sm opacity-80">Wallet &gt;</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <div className="flex flex-col">
