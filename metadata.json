@@ -1,0 +1,5 @@
+{
+  "name": "WeChat Clone (Red)",
+  "description": "A high-fidelity clone of the Chinese WeChat application featuring messaging, contact management, and Moments (social feed) with local data persistence.",
+  "requestFramePermissions": []
+}
