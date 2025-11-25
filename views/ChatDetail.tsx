@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
@@ -23,81 +24,83 @@ const getPersonaReply = (userId: string, userMessage: string): string => {
 
     // 1. Mom (id: 2)
     if (userId === '2') {
-        if (msg.includes('吃') || msg.includes('饭') || msg.includes('饿')) return "记得多吃点青菜！别老吃外卖。🥦";
-        if (msg.includes('冷') || msg.includes('天') || msg.includes('雨')) return "穿秋裤了吗？别冻着！🧣";
-        if (msg.includes('晚') || msg.includes('睡') || msg.includes('累')) return "早点睡！熬夜伤肝。😴";
-        if (msg.includes('钱')) return "钱够不够花？不够妈给你转。";
-        if (msg.includes('爱')) return "妈妈也爱你，照顾好自己。❤️";
-        return "什么时候回家？妈给你包饺子。";
+        if (msg.includes('吃') || msg.includes('饭') || msg.includes('饿')) return "记得多吃点青菜！别老吃外卖🥦。对身体不好！😰";
+        if (msg.includes('冷') || msg.includes('天') || msg.includes('雨')) return "穿秋裤了吗？别冻着！🧣 注意保暖啊！☕️";
+        if (msg.includes('晚') || msg.includes('睡') || msg.includes('累')) return "早点睡！熬夜伤肝😴。听妈妈话！❤️";
+        if (msg.includes('钱')) return "钱够不够花？不够妈给你转💸。别苦了自己！";
+        if (msg.includes('爱')) return "妈妈也爱你，照顾好自己❤️。🌹";
+        return "什么时候回家？妈给你包饺子🥟。想你了！🥺";
     }
 
     // 2. Boss (id: 3)
     if (userId === '3') {
-        if (msg.includes('好') || msg.includes('完') || msg.includes('报告')) return "发我邮箱，我开会前要看。";
-        if (msg.includes('假') || msg.includes('病') || msg.includes('休')) return "这周项目关键期，能不能克服一下？";
-        if (msg.includes('方案') || msg.includes('建议')) return "周一例会细聊。";
-        if (msg.includes('抱歉') || msg.includes('错')) return "下不为例，注意细节。";
-        return "收到，抓紧落实KPI。";
+        if (msg.includes('好') || msg.includes('完') || msg.includes('报告')) return "发我邮箱📧，我开会前要看。辛苦了👍";
+        if (msg.includes('假') || msg.includes('病') || msg.includes('休')) return "这周项目关键期，能不能克服一下？🤔 加油！💪";
+        if (msg.includes('方案') || msg.includes('建议')) return "周一例会细聊📅。";
+        if (msg.includes('抱歉') || msg.includes('错')) return "下不为例，注意细节⚠️。";
+        return "收到，抓紧落实KPI📈。加油干！🚀";
     }
 
     // 3. Wife (id: 8)
     if (userId === '8') {
-        if (msg.includes('爱') || msg.includes('想')) return "我也爱你老公！么么哒！❤️😘";
-        if (msg.includes('吃') || msg.includes('饭')) return "我想吃火锅！或者日料？🍣";
-        if (msg.includes('家') || msg.includes('回')) return "回来路上带杯奶茶！🧋";
-        if (msg.includes('买')) return "那个包包打折了，能不能买嘛！🥺";
-        return "几点回来？想你了。";
+        if (msg.includes('爱') || msg.includes('想')) return "我也爱你老公！么么哒！❤️😘💋";
+        if (msg.includes('吃') || msg.includes('饭')) return "我想吃火锅！或者日料？🍣🍱 你决定嘛~ 😉";
+        if (msg.includes('家') || msg.includes('回')) return "回来路上带杯奶茶！🧋 还有鸭脖！🍖";
+        if (msg.includes('买')) return "那个包包打折了，能不能买嘛！🥺🛍️ 拜托拜托~ 🙏";
+        return "几点回来？想你了🥺。等你哦！🏠❤️";
     }
 
     // 4. Momo (id: 5)
     if (userId === '5') {
-        if (msg.includes('哈哈') || msg.includes('笑')) return "xswl (笑死我了) 😂😂😂";
-        if (msg.includes('难过') || msg.includes('哭')) return "emo了... 🌧️";
-        if (msg.includes('?')) return "尊嘟假嘟 O.o";
-        return "yyds! 🙌";
+        if (msg.includes('哈哈') || msg.includes('笑')) return "xswl (笑死我了) 😂😂😂 绝了！🤙";
+        if (msg.includes('难过') || msg.includes('哭')) return "emo了... 🌧️ 抱抱~ 🫂";
+        if (msg.includes('?')) return "尊嘟假嘟 O.o 🤨";
+        return "yyds! 🙌 666!";
     }
 
     // 5. Real Estate Agent (id: 4)
     if (userId === '4') {
-        return "Leo哥，市场回暖了！现在不买又要涨了！这套房型绝佳，带您看看？🏠";
+        return "Leo哥，市场回暖了！🔥 现在不买又要涨了！📈 这套房型绝佳，带您看看？🏠 随时恭候！🤝";
     }
 
     // 6. Colleague Jack (id: 10) - English Speaker (Programmer)
     if (userId === '10') {
-        if (msg.includes('bug') || msg.includes('error')) return "Have you checked the logs? It works on my machine.";
-        if (msg.includes('coffee')) return "Let's go! I need caffeine.";
-        if (msg.includes('merge')) return "LGTM. Merging now.";
-        return "Still coding... this deadline is killing me. 💻";
+        if (msg.includes('bug') || msg.includes('error')) return "Have you checked the logs? 🐛 It works on my machine. 🤷‍♂️";
+        if (msg.includes('coffee')) return "Let's go! I need caffeine. ☕️🚀";
+        if (msg.includes('merge')) return "LGTM. Merging now. ✅👍";
+        return "Still coding... this deadline is killing me. 💻💀";
     }
 
     // 7. HR Sara (id: 19) - English Speaker
     if (userId === '19') {
-        if (msg.includes('job') || msg.includes('offer')) return "We have a great position opening up. Are you interested?";
-        return "Let's touch base next week.";
+        if (msg.includes('job') || msg.includes('offer')) return "We have a great position opening up. Are you interested? 🌟";
+        return "Let's touch base next week. 🗓️ Have a nice weekend! ☀️";
     }
     
     // General Logic based on Language
     if (isForeign) {
-        if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) return "Hey! Long time no see. 👋";
-        if (msg.includes('how are you') || msg.includes('doing')) return "I'm good, just busy with stuff. You?";
-        if (msg.includes('?')) return "That's a good question... 🤔";
-        if (msg.includes('payment') || msg.includes('money')) return "Payment received, thanks!";
-        if (msg.includes('ok') || msg.includes('good')) return "👍";
-        return "Got it.";
+        if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) return "Hey! Long time no see. 👋😁";
+        if (msg.includes('how are you') || msg.includes('doing')) return "I'm good, just busy with stuff. You? 😎";
+        if (msg.includes('?')) return "That's a good question... 🤔 let me think.";
+        if (msg.includes('payment') || msg.includes('money')) return "Payment received, thanks! 💸🙏";
+        if (msg.includes('ok') || msg.includes('good')) return "Awesome! 👍✨";
+        return "Got it. 👌";
     } else {
-        if (msg.includes('你好') || msg.includes('在吗')) return "在的，好久不见！👋";
-        if (msg.includes('怎么样') || msg.includes('最近')) return "挺好的，瞎忙呗。你呢？";
-        if (msg.includes('?')) return "这个问题... 🤔";
-        if (msg.includes('钱') || msg.includes('转账')) return "收到啦，谢谢老板！";
-        if (msg.includes('好') || msg.includes('恩')) return "👍";
+        if (msg.includes('你好') || msg.includes('在吗')) return "在的，好久不见！👋😄";
+        if (msg.includes('怎么样') || msg.includes('最近')) return "挺好的，瞎忙呗。你呢？😸";
+        if (msg.includes('?')) return "这个问题... 🤔 我得想想";
+        if (msg.includes('钱') || msg.includes('转账')) return "收到啦，谢谢老板！💸🤩 老板大气！";
+        if (msg.includes('好') || msg.includes('恩')) return "OK! 👍✅";
         
         const randomChineseReplies = [
-            "真的吗？",
-            "哈哈，有意思。",
-            "这周末有空出来聚聚？",
-            "我现在有点忙，回聊。",
-            "确实。",
-            "[表情包]"
+            "真的吗？😲",
+            "哈哈，有意思 😂",
+            "这周末有空出来聚聚？🍻",
+            "我现在有点忙，回聊 👋",
+            "确实。🤔",
+            "笑死我了 🤣",
+            "厉害了！👍",
+            "[表情包] 🤪"
         ];
         return randomChineseReplies[Math.floor(Math.random() * randomChineseReplies.length)];
     }
@@ -164,7 +167,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                             id: `rep_tf_${Date.now()}`,
                             senderId: id,
                             receiverId: currentUser.id,
-                            content: isForeign ? "Received! You are the best! 💸❤️" : "收到啦！老板大气！💸❤️",
+                            content: isForeign ? "Received! You are the best! 💸❤️" : "收到啦！老板大气！💸❤️ 谢谢！🙏",
                             type: 'text',
                             timestamp: Date.now() + 100,
                             read: false
@@ -182,7 +185,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                            id: `rep_rp_${Date.now()}`,
                            senderId: id,
                            receiverId: currentUser.id,
-                           content: isForeign ? "Wow! Boss is so generous! Best wishes! 🧧✨" : "哇！老板大气！恭喜发财！🧧✨",
+                           content: isForeign ? "Wow! Boss is so generous! Best wishes! 🧧✨" : "哇！老板大气！恭喜发财！🧧✨ 谢谢老板！🥰",
                            type: 'text',
                            timestamp: Date.now(),
                            read: false

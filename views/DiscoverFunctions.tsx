@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Header, ScrollArea } from '../components/Layout';
 import { IconMore, IconCamera } from '../components/Icons';
 import { useStore } from '../hooks/useStore';
@@ -229,9 +231,97 @@ export const MiniProgramsView = ({ onBack }: { onBack: () => void }) => {
     );
 };
 
-// --- Search / Top Stories View (Combined Mock) ---
-export const SearchAndNewsView = ({ onBack, title }: { onBack: () => void, title: string }) => {
+// --- Search / Top Stories View (Combined Dynamic Feed) ---
+
+interface NewsItem {
+    id: string;
+    title: string;
+    source: string;
+    reads: string;
+    image: string;
+    category: string;
+    date: string;
+    content: string[]; // Array of paragraphs
+}
+
+// Global Cache for News to persist across views
+const NEWS_CACHE: Record<string, NewsItem> = {};
+
+const NEWS_TOPICS = ['Technology', 'Finance', 'Health', 'Sports', 'Entertainment', 'Science'];
+const NEWS_SOURCES = ['TechDaily', 'BizInsider', 'HealthLine', 'SportsCentral', 'PopCulture', 'ScienceNow'];
+
+const generateNews = (count: number): NewsItem[] => {
+    return Array.from({ length: count }).map((_, i) => {
+        const seed = Date.now() + i + Math.random();
+        const topic = NEWS_TOPICS[Math.floor(Math.random() * NEWS_TOPICS.length)];
+        const source = NEWS_SOURCES[Math.floor(Math.random() * NEWS_SOURCES.length)];
+        
+        const titles = [
+            `Breaking: Major breakthrough in ${topic} announced today!`,
+            `Top 10 reasons why ${topic} is changing the world.`,
+            `Exclusive interview with experts on ${topic}.`,
+            `Why everyone is talking about this ${topic} trend.`,
+            `Market update: ${topic} stocks soar to new highs.`,
+            `New study reveals surprising facts about ${topic}.`,
+            `Global ${topic} summit concludes with historic agreement.`
+        ];
+
+        // Generate fake body content
+        const paragraphs = [
+            `In a stunning development that has captured the attention of the ${topic} world, experts are calling this the most significant shift in decades. The implications for the industry are profound, with major players scrambling to adapt to the new reality.`,
+            `"We have never seen anything like this before," said Dr. Smith, a leading analyst at ${source}. "The data is clear: this is a game-changer." The announcement came early this morning, sending shockwaves through global markets.`,
+            `While skeptics remain cautious, early indicators suggest that this trend is here to stay. Consumer adoption has been rapid, exceeding all initial forecasts. Companies that fail to innovate risk being left behind in this fast-moving landscape.`,
+            `Looking ahead, the focus will shift to implementation and regulation. Policy makers are already discussing potential frameworks to ensure safety and fairness. As the situation evolves, we will continue to provide updates.`,
+            `For now, the world watches and waits. One thing is certain: the future of ${topic} will never be the same again.`
+        ];
+
+        const item: NewsItem = {
+            id: `news_${seed}`,
+            title: titles[Math.floor(Math.random() * titles.length)],
+            source: source,
+            reads: `${Math.floor(Math.random() * 90 + 10)}k+`,
+            image: `https://loremflickr.com/400/300/${topic.toLowerCase()}?lock=${Math.floor(seed)}`,
+            category: topic,
+            date: new Date().toLocaleDateString(),
+            content: paragraphs
+        };
+        
+        // Add to cache
+        NEWS_CACHE[item.id] = item;
+        
+        return item;
+    });
+};
+
+export const SearchAndNewsView = ({ onBack, onNavigate, title }: { onBack: () => void, onNavigate: (v: ViewState) => void, title: string }) => {
     const { t } = useStore();
+    const [news, setNews] = useState<NewsItem[]>([]);
+    const loadingRef = useRef(false);
+
+    // Initial load - Check if we have cached news first, otherwise gen
+    useEffect(() => {
+        const cachedIds = Object.keys(NEWS_CACHE);
+        if (cachedIds.length > 0) {
+            // Load some from cache to keep consistency if coming back
+             setNews(Object.values(NEWS_CACHE).slice(0, 10)); // Just mock retrieval
+        } else {
+             setNews(generateNews(8));
+        }
+    }, []);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+        if (scrollHeight - scrollTop - clientHeight < 100) {
+            if (!loadingRef.current) {
+                loadingRef.current = true;
+                setTimeout(() => {
+                    setNews(prev => [...prev, ...generateNews(5)]);
+                    loadingRef.current = false;
+                }, 500);
+            }
+        }
+    };
+
     return (
         <div className="flex flex-col h-full bg-white">
             <div className="flex items-center px-2 py-2 border-b border-gray-100">
@@ -241,25 +331,77 @@ export const SearchAndNewsView = ({ onBack, title }: { onBack: () => void, title
                     <input type="text" placeholder={t('search')} className="bg-transparent outline-none flex-1 text-sm" />
                 </div>
             </div>
-            <ScrollArea className="bg-white">
+            
+            <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
                 <div className="p-4">
                     <h3 className="text-xs font-bold text-gray-400 mb-3">WECHAT HOT</h3>
                     <div className="flex flex-wrap gap-2 mb-6">
-                        {['Typhoon News', 'New Tech Release', 'Holiday Travel', 'Healthy Diet', 'Stock Market'].map(tag => (
-                            <span key={tag} className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700">{tag}</span>
+                        {['Typhoon News', 'New Tech Release', 'Holiday Travel', 'Healthy Diet', 'Stock Market', 'AI Revolution'].map(tag => (
+                            <span key={tag} className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700 cursor-pointer hover:bg-gray-200">{tag}</span>
                         ))}
                     </div>
 
                     <h3 className="text-xs font-bold text-gray-400 mb-3">{t('top_stories').toUpperCase()}</h3>
-                    {[1,2,3,4].map(i => (
-                         <div key={i} className="flex py-3 border-b border-gray-100">
-                             <div className="flex-1 pr-2">
-                                 <h4 className="text-base font-medium text-black leading-snug mb-1">Big news happened today in the technology world. Read more about it.</h4>
-                                 <div className="text-xs text-gray-400">TechDaily • 35k reads</div>
+                    
+                    {news.map((item) => (
+                         <div 
+                            key={item.id} 
+                            className="flex py-3 border-b border-gray-100 cursor-pointer active:bg-gray-50"
+                            onClick={() => onNavigate({ type: 'DISCOVER_ARTICLE', articleId: item.id })}
+                         >
+                             <div className="flex-1 pr-2 flex flex-col justify-between">
+                                 <h4 className="text-base font-medium text-black leading-snug mb-1 line-clamp-2">{item.title}</h4>
+                                 <div className="text-xs text-gray-400">{item.source} • {item.reads} reads</div>
                              </div>
-                             <img src={`https://picsum.photos/seed/news${i}/200/200`} className="w-24 h-16 rounded object-cover bg-gray-200" />
+                             <img src={item.image} className="w-24 h-16 rounded object-cover bg-gray-200 shrink-0" />
                          </div>
                     ))}
+                    
+                    <div className="py-4 text-center text-gray-400 text-xs">
+                        Loading more stories...
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const ArticleView = ({ articleId, onBack }: { articleId: string, onBack: () => void }) => {
+    const article = NEWS_CACHE[articleId];
+
+    if (!article) return <div className="flex items-center justify-center h-full">Article not found</div>;
+
+    return (
+        <div className="flex flex-col h-full bg-white">
+            <div className="flex items-center justify-between px-4 h-12 border-b border-gray-100 shrink-0">
+                <button onClick={onBack} className="p-2 -ml-2">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div className="font-medium text-sm text-gray-700 truncate max-w-[200px]">{article.source}</div>
+                <button className="p-2"><IconMore /></button>
+            </div>
+
+            <ScrollArea className="bg-white">
+                <div className="p-6">
+                    <h1 className="text-2xl font-bold text-black mb-4 leading-tight">{article.title}</h1>
+                    
+                    <div className="flex items-center text-xs text-gray-400 mb-6">
+                        <span className="text-blue-600 font-medium mr-2">{article.source}</span>
+                        <span>{article.date}</span>
+                    </div>
+
+                    <img src={article.image} className="w-full h-auto rounded-lg mb-6" />
+
+                    <div className="text-[17px] leading-relaxed text-gray-800 space-y-4 font-light">
+                        {article.content.map((para, i) => (
+                            <p key={i}>{para}</p>
+                        ))}
+                    </div>
+
+                    <div className="mt-8 pt-8 border-t border-gray-100 text-xs text-gray-400 flex justify-between">
+                        <span>Reads {article.reads}</span>
+                        <span>Wow 1.2k</span>
+                    </div>
                 </div>
             </ScrollArea>
         </div>

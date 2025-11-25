@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
@@ -17,6 +18,7 @@ interface StoreContextType {
   markAsRead: (id: string) => void;
   addFriend: (phone: string) => boolean;
   deleteFriend: (id: string) => void;
+  updateFriendRemark: (id: string, remark: string) => void;
   addPost: (content: string, images: string[]) => void;
   refreshMoments: () => Promise<void>;
   toggleLike: (postId: string) => void;
@@ -227,7 +229,17 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   }, [friends, currentUser.id]);
 
   const deleteFriend = useCallback((id: string) => {
+    // 1. Remove from friends list
     setFriends(prev => prev.filter(f => f.id !== id));
+    
+    // 2. Remove all chat history (sent and received)
+    setMessages(prev => prev.filter(msg => 
+        msg.senderId !== id && msg.receiverId !== id
+    ));
+  }, []);
+
+  const updateFriendRemark = useCallback((id: string, remark: string) => {
+    setFriends(prev => prev.map(f => f.id === id ? { ...f, remark } : f));
   }, []);
 
   // --- AUTO INTERACTION LOGIC ---
@@ -265,7 +277,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                             id: `notif_l_${Date.now()}`,
                             type: 'like',
                             userId: friend.id,
-                            userName: friend.name,
+                            userName: friend.remark || friend.name,
                             userAvatar: friend.avatar,
                             postId: postId,
                             timestamp: Date.now(),
@@ -286,7 +298,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                             const newComment: Comment = {
                                 id: `c_ai_${Date.now()}`,
                                 userId: friend.id,
-                                userName: friend.name,
+                                userName: friend.remark || friend.name,
                                 content: commentText,
                                 timestamp: Date.now()
                             };
@@ -295,7 +307,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                                 id: `notif_c_${Date.now()}`,
                                 type: 'comment',
                                 userId: friend.id,
-                                userName: friend.name,
+                                userName: friend.remark || friend.name,
                                 userAvatar: friend.avatar,
                                 postId: postId,
                                 content: commentText,
@@ -392,7 +404,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                 postComments.push({
                     id: `c_gen_${Date.now()}_${i}_${idx}`,
                     userId: commenter.id,
-                    userName: commenter.name,
+                    userName: commenter.remark || commenter.name,
                     content: getRandomItem(category.comments),
                     timestamp: Date.now() - Math.floor(Math.random() * 60000)
                 });
@@ -480,7 +492,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
           } else {
               const f = friends.find(f => f.id === sessionId);
               if (f) {
-                  name = f.name;
+                  name = f.remark || f.name;
                   avatar = f.avatar;
               }
           }
@@ -522,7 +534,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const getUser = useCallback((id: string) => {
       if (id === currentUser.id) return currentUser;
       const friend = friends.find(f => f.id === id);
-      if (friend) return friend;
+      if (friend) return { ...friend, name: friend.remark || friend.name };
 
       return {
           id,
@@ -554,6 +566,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       markAsRead,
       addFriend,
       deleteFriend,
+      updateFriendRemark,
       addPost,
       refreshMoments,
       toggleLike,

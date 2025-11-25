@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState } from '../types';
@@ -97,7 +98,7 @@ export const MyProfile = ({ onNavigate, onBack }: { onNavigate: (view: ViewState
           <MenuItem 
             label={t('wechat_id')} 
             value={currentUser.wxid} 
-            isLink={false}
+            onClick={() => onNavigate({ type: 'EDIT_WXID' })} 
           />
           <MenuItem label={t('my_qr_code')} icon="🏁" />
           <MenuItem label={t('more')} />
@@ -151,3 +152,44 @@ export const EditName = ({ onBack }: { onBack: () => void }) => {
     </div>
   );
 };
+
+export const EditWxid = ({ onBack }: { onBack: () => void }) => {
+    const { currentUser, updateCurrentUser, t } = useStore();
+    const [wxid, setWxid] = useState(currentUser.wxid);
+  
+    const handleSave = () => {
+      if (wxid.trim() && wxid !== currentUser.wxid) {
+        updateCurrentUser({ wxid: wxid.trim() });
+        onBack();
+      }
+    };
+  
+    return (
+      <div className="flex flex-col h-full bg-[#EDEDED]">
+        <div className="flex items-center justify-between px-4 h-14 bg-[#EDEDED] shrink-0">
+          <button onClick={onBack} className="text-black text-base">{t('cancel')}</button>
+          <span className="font-semibold text-lg">{t('set_wxid')}</span>
+          <button 
+            onClick={handleSave}
+            disabled={!wxid.trim() || wxid === currentUser.wxid}
+            className={`px-3 py-1.5 rounded text-white text-sm font-medium ${(!wxid.trim() || wxid === currentUser.wxid) ? 'bg-gray-300' : 'bg-wechat-green'}`}
+          >
+            {t('save')}
+          </button>
+        </div>
+  
+        <div className="p-4">
+          <div className="bg-white rounded-none border-t border-b border-gray-200 -mx-4 px-4 py-2">
+             <input 
+               autoFocus
+               className="w-full text-base outline-none py-1"
+               value={wxid}
+               onChange={e => setWxid(e.target.value)}
+               placeholder={t('enter_wxid')}
+             />
+          </div>
+          <p className="mt-2 text-gray-400 text-xs">{t('wxid_hint')}</p>
+        </div>
+      </div>
+    );
+  };

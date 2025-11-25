@@ -1,4 +1,5 @@
 
+
 import { User, Post, Message, Group } from './types';
 
 export const TRANSLATIONS = {
@@ -32,15 +33,20 @@ export const TRANSLATIONS = {
     more: 'More',
     incoming_call_ringtone: 'Incoming Call Ringtone',
     set_name: 'Set Name',
+    set_wxid: 'Set WeChat ID',
     cancel: 'Cancel',
     save: 'Save',
     done: 'Done',
     enter_name: 'Enter your name',
+    enter_wxid: 'Enter new WeChat ID',
+    wxid_hint: 'WeChat ID can only be changed once a year.',
     // Contacts
     new_friends: 'New Friends',
     group_chats: 'Group Chats',
     tags: 'Tags',
     official_accounts: 'Official Accounts',
+    set_remark: 'Set Remark and Tag',
+    remark: 'Remark',
     // Chat
     send: 'Send',
     hold_to_talk: 'Hold to Talk',
@@ -132,15 +138,20 @@ export const TRANSLATIONS = {
     more: '更多',
     incoming_call_ringtone: '来电铃声',
     set_name: '设置名字',
+    set_wxid: '设置微信号',
     cancel: '取消',
     save: '保存',
     done: '完成',
     enter_name: '输入你的名字',
+    enter_wxid: '输入新的微信号',
+    wxid_hint: '微信号一年只能修改一次。',
     // Contacts
     new_friends: '新的朋友',
     group_chats: '群聊',
     tags: '标签',
     official_accounts: '公众号',
+    set_remark: '设置备注和标签',
+    remark: '备注名',
     // Chat
     send: '发送',
     hold_to_talk: '按住 说话',
@@ -209,7 +220,7 @@ export const CURRENT_USER: User = {
   name: 'Leo',
   avatar: 'https://picsum.photos/seed/me_cool/200/200',
   phone: '13800138000',
-  wxid: 'wxid_leo888',
+  wxid: 'hu2869790686',
   signature: 'Dream big, work hard. 🚀'
 };
 

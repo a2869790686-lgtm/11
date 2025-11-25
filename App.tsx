@@ -1,11 +1,13 @@
+
+
 import React, { useState } from 'react';
 import { StoreProvider, useStore } from './hooks/useStore';
 import { Screen } from './components/Layout';
 import { ChatList } from './views/ChatList';
-import { ContactList, AddFriend, UserProfile } from './views/ContactList';
+import { ContactList, AddFriend, UserProfile, SetRemark } from './views/ContactList';
 import { Discover } from './views/Discover';
-import { ScanView, ShakeView, GamesView, MiniProgramsView, SearchAndNewsView } from './views/DiscoverFunctions';
-import { Me, MyProfile, EditName } from './views/Me';
+import { ScanView, ShakeView, GamesView, MiniProgramsView, SearchAndNewsView, ArticleView } from './views/DiscoverFunctions';
+import { Me, MyProfile, EditName, EditWxid } from './views/Me';
 import { ChatDetail } from './views/ChatDetail';
 import { ChatInfo } from './views/ChatInfo';
 import { GroupList } from './views/GroupList';
@@ -83,10 +85,14 @@ const AppContent = () => {
         return <AddFriend onBack={() => handleNavigate({ type: 'TAB_CONTACTS' })} />;
       case 'USER_PROFILE':
         return <UserProfile userId={viewState.userId} onBack={() => handleNavigate({ type: 'TAB_CONTACTS' })} onNavigate={handleNavigate} />;
+      case 'SET_REMARK':
+        return <SetRemark userId={viewState.userId} onBack={() => handleNavigate({ type: 'USER_PROFILE', userId: viewState.userId })} />;
       case 'MY_PROFILE':
         return <MyProfile onNavigate={handleNavigate} onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
       case 'EDIT_NAME':
         return <EditName onBack={() => handleNavigate({ type: 'MY_PROFILE' })} />;
+      case 'EDIT_WXID':
+        return <EditWxid onBack={() => handleNavigate({ type: 'MY_PROFILE' })} />;
       case 'SETTINGS':
         return <Settings onNavigate={handleNavigate} onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
       case 'SETTINGS_GENERAL':
@@ -105,9 +111,11 @@ const AppContent = () => {
       case 'DISCOVER_SHAKE':
         return <ShakeView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
       case 'DISCOVER_TOP_STORIES':
-        return <SearchAndNewsView title="Top Stories" onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
+        return <SearchAndNewsView title="Top Stories" onNavigate={handleNavigate} onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
       case 'DISCOVER_SEARCH':
-        return <SearchAndNewsView title="Search" onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
+        return <SearchAndNewsView title="Search" onNavigate={handleNavigate} onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
+      case 'DISCOVER_ARTICLE':
+        return <ArticleView articleId={viewState.articleId} onBack={() => handleNavigate({ type: 'DISCOVER_TOP_STORIES' })} />;
       case 'DISCOVER_GAMES':
         return <GamesView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} onNavigate={handleNavigate} />;
       case 'WARM_HOME_GAME':

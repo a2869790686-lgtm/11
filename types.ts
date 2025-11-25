@@ -7,6 +7,7 @@ export interface User {
   phone: string;
   wxid: string;
   signature?: string;
+  remark?: string; // Friend remark name
 }
 
 export interface Group {
@@ -83,8 +84,10 @@ export type ViewState =
   | { type: 'MOMENTS_PUBLISH' }
   | { type: 'ADD_FRIEND' }
   | { type: 'USER_PROFILE', userId: string }
+  | { type: 'SET_REMARK', userId: string }
   | { type: 'MY_PROFILE' }
   | { type: 'EDIT_NAME' }
+  | { type: 'EDIT_WXID' }
   | { type: 'CHANNELS' }
   | { type: 'SETTINGS' }
   | { type: 'SETTINGS_GENERAL' }
@@ -100,6 +103,7 @@ export type ViewState =
   | { type: 'WARM_HOME_GAME' }
   | { type: 'DISCOVER_MINI_PROGRAMS' }
   | { type: 'DISCOVER_MUSIC' }
+  | { type: 'DISCOVER_ARTICLE', articleId: string }
   | { type: 'MONEY_RED_PACKET', userId: string }
   | { type: 'MONEY_TRANSFER', userId: string }
   | { type: 'MONEY_CODE' };
