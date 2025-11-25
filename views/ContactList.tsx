@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState } from '../types';
@@ -11,14 +9,14 @@ interface ContactListProps {
 }
 
 export const ContactList = ({ onNavigate }: ContactListProps) => {
-  const { friends } = useStore();
+  const { friends, t } = useStore();
   
   const sortedFriends = [...friends].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <>
       <div className="bg-wechat-header h-14 px-4 flex items-center justify-between shrink-0 border-b border-wechat-divider sticky top-0 z-10">
-        <span className="font-semibold text-lg">Contacts</span>
+        <span className="font-semibold text-lg">{t('contacts')}</span>
         <button onClick={() => onNavigate({ type: 'ADD_FRIEND' })}>
           <IconPlus />
         </button>
@@ -30,7 +28,7 @@ export const ContactList = ({ onNavigate }: ContactListProps) => {
           <div className="w-10 h-10 rounded-md bg-orange-400 flex items-center justify-center text-white">
             <IconPlus />
           </div>
-          <span className="ml-3 font-normal">New Friends</span>
+          <span className="ml-3 font-normal">{t('new_friends')}</span>
         </div>
         <div 
             className="flex items-center px-4 py-3 bg-white border-b border-wechat-divider cursor-pointer active:bg-gray-100"
@@ -39,13 +37,13 @@ export const ContactList = ({ onNavigate }: ContactListProps) => {
           <div className="w-10 h-10 rounded-md bg-green-500 flex items-center justify-center text-white">
             <IconGroup />
           </div>
-          <span className="ml-3 font-normal">Group Chats</span>
+          <span className="ml-3 font-normal">{t('group_chats')}</span>
         </div>
         <div className="flex items-center px-4 py-3 bg-white border-b border-wechat-divider cursor-pointer active:bg-gray-100">
           <div className="w-10 h-10 rounded-md bg-blue-500 flex items-center justify-center text-white">
             <span className="text-lg">🏷️</span>
           </div>
-          <span className="ml-3 font-normal">Tags</span>
+          <span className="ml-3 font-normal">{t('tags')}</span>
         </div>
 
         {/* Contact List */}

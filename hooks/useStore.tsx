@@ -1,8 +1,6 @@
-
-
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
-import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS } from '../constants';
+import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
 
 interface StoreContextType {
   currentUser: User;
@@ -11,6 +9,8 @@ interface StoreContextType {
   messages: Message[];
   posts: Post[];
   notifications: Notification[];
+  language: 'en' | 'zh';
+  setLanguage: (lang: 'en' | 'zh') => void;
   updateCurrentUser: (updates: Partial<User>) => void;
   addMessage: (msg: Message) => void;
   updateMessage: (id: string, updates: Partial<Message>) => void;
@@ -24,6 +24,7 @@ interface StoreContextType {
   getChatHistory: (id: string, isGroup?: boolean) => Message[];
   getChatSessions: () => ChatSession[];
   getUser: (id: string) => User | undefined;
+  t: (key: keyof typeof TRANSLATIONS['en']) => string;
 }
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -122,6 +123,10 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return saved ? JSON.parse(saved) : CURRENT_USER;
   });
 
+  const [language, setLanguage] = useState<'en' | 'zh'>(() => {
+    return (localStorage.getItem('wx_language') as 'en' | 'zh') || 'en';
+  });
+
   const [friends, setFriends] = useState<User[]>(() => {
     const saved = localStorage.getItem('wx_friends');
     return saved ? JSON.parse(saved) : INITIAL_FRIENDS;
@@ -148,6 +153,10 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('wx_current_user', JSON.stringify(currentUser));
   }, [currentUser]);
+
+  useEffect(() => {
+    localStorage.setItem('wx_language', language);
+  }, [language]);
 
   useEffect(() => {
     localStorage.setItem('wx_friends', JSON.stringify(friends));
@@ -523,6 +532,11 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
           wxid: `wxid_${id}`
       };
   }, [friends, currentUser]);
+  
+  // Translation helper
+  const t = useCallback((key: keyof typeof TRANSLATIONS['en']) => {
+      return TRANSLATIONS[language][key] || key;
+  }, [language]);
 
   return (
     <StoreContext.Provider value={{
@@ -532,6 +546,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       messages,
       posts,
       notifications,
+      language,
+      setLanguage,
       updateCurrentUser,
       addMessage,
       updateMessage,
@@ -544,7 +560,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       addComment,
       getChatHistory,
       getChatSessions,
-      getUser
+      getUser,
+      t
     }}>
       {children}
     </StoreContext.Provider>

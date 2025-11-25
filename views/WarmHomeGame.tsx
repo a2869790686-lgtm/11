@@ -185,7 +185,7 @@ export const WarmHomeGame = ({ onBack }: { onBack: () => void }) => {
             </div>
 
             {/* Bottom Controls */}
-            <div className="bg-white h-20 shrink-0 border-t border-gray-200 flex justify-around items-center px-4 pb-safe">
+            <div className="bg-white h-20 shrink-0 border-t border-gray-200 flex justify-around items-center px-4 pb-[env(safe-area-inset-bottom)]">
                 <button 
                     onClick={() => setActiveTab('shop')}
                     className={`flex flex-col items-center gap-1 ${activeTab === 'shop' ? 'text-orange-500 scale-110' : 'text-gray-500'}`}

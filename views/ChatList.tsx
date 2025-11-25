@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState } from '../types';
@@ -20,13 +18,13 @@ const formatTime = (ts: number) => {
 };
 
 export const ChatList = ({ onNavigate }: ChatListProps) => {
-  const { getChatSessions } = useStore();
+  const { getChatSessions, t } = useStore();
   const sessions = getChatSessions();
 
   return (
     <>
       <div className="bg-wechat-header h-14 px-4 flex items-center justify-between shrink-0 border-b border-wechat-divider sticky top-0 z-10">
-        <span className="font-semibold text-lg">WeChat</span>
+        <span className="font-semibold text-lg">{t('wechat')}</span>
         <div className="flex gap-4">
           <button onClick={() => onNavigate({ type: 'ADD_FRIEND' })}>
             <IconPlus />

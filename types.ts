@@ -88,6 +88,7 @@ export type ViewState =
   | { type: 'CHANNELS' }
   | { type: 'SETTINGS' }
   | { type: 'SETTINGS_GENERAL' }
+  | { type: 'SETTINGS_LANGUAGE' }
   | { type: 'SERVICES' }
   | { type: 'FAVORITES' }
   | { type: 'STICKER_GALLERY' }
@@ -100,4 +101,5 @@ export type ViewState =
   | { type: 'DISCOVER_MINI_PROGRAMS' }
   | { type: 'DISCOVER_MUSIC' }
   | { type: 'MONEY_RED_PACKET', userId: string }
-  | { type: 'MONEY_TRANSFER', userId: string };
+  | { type: 'MONEY_TRANSFER', userId: string }
+  | { type: 'MONEY_CODE' };

@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { StoreProvider } from './hooks/useStore';
+import { StoreProvider, useStore } from './hooks/useStore';
 import { Screen } from './components/Layout';
 import { ChatList } from './views/ChatList';
 import { ContactList, AddFriend, UserProfile } from './views/ContactList';
@@ -12,34 +11,36 @@ import { ChatInfo } from './views/ChatInfo';
 import { GroupList } from './views/GroupList';
 import { Moments, UserMoments } from './views/Moments';
 import { Channels } from './views/Channels';
-import { Settings, SettingsGeneral } from './views/Settings';
+import { Settings, SettingsGeneral, LanguageSettings } from './views/Settings';
 import { Services } from './views/Services';
 import { Favorites } from './views/Favorites';
 import { StickerGallery } from './views/StickerGallery';
-import { RedPacketView, TransferView } from './views/WalletFunctions';
+import { RedPacketView, TransferView, MoneyCodeView } from './views/WalletFunctions';
 import { MusicView } from './views/Music';
 import { WarmHomeGame } from './views/WarmHomeGame';
 import { IconChat, IconContacts, IconDiscover, IconMe } from './components/Icons';
 import { ViewState } from './types';
 
 const TabBar = ({ current, onSelect }: { current: string, onSelect: (view: ViewState) => void }) => {
+  const { t } = useStore();
+
   return (
     <div className="h-14 bg-[#F7F7F7] border-t border-[#E5E5E5] flex justify-around items-center shrink-0 pb-1 pb-[env(safe-area-inset-bottom)]">
       <button onClick={() => onSelect({ type: 'TAB_CHATS' })} className="flex flex-col items-center justify-center w-full h-full">
         <IconChat active={current === 'TAB_CHATS'} />
-        <span className={`text-[10px] mt-0.5 ${current === 'TAB_CHATS' ? 'text-wechat-green' : 'text-black'}`}>Chats</span>
+        <span className={`text-[10px] mt-0.5 ${current === 'TAB_CHATS' ? 'text-wechat-green' : 'text-black'}`}>{t('chats')}</span>
       </button>
       <button onClick={() => onSelect({ type: 'TAB_CONTACTS' })} className="flex flex-col items-center justify-center w-full h-full">
         <IconContacts active={current === 'TAB_CONTACTS'} />
-        <span className={`text-[10px] mt-0.5 ${current === 'TAB_CONTACTS' ? 'text-wechat-green' : 'text-black'}`}>Contacts</span>
+        <span className={`text-[10px] mt-0.5 ${current === 'TAB_CONTACTS' ? 'text-wechat-green' : 'text-black'}`}>{t('contacts')}</span>
       </button>
       <button onClick={() => onSelect({ type: 'TAB_DISCOVER' })} className="flex flex-col items-center justify-center w-full h-full">
         <IconDiscover active={current === 'TAB_DISCOVER'} />
-        <span className={`text-[10px] mt-0.5 ${current === 'TAB_DISCOVER' ? 'text-wechat-green' : 'text-black'}`}>Discover</span>
+        <span className={`text-[10px] mt-0.5 ${current === 'TAB_DISCOVER' ? 'text-wechat-green' : 'text-black'}`}>{t('discover')}</span>
       </button>
       <button onClick={() => onSelect({ type: 'TAB_ME' })} className="flex flex-col items-center justify-center w-full h-full">
         <IconMe active={current === 'TAB_ME'} />
-        <span className={`text-[10px] mt-0.5 ${current === 'TAB_ME' ? 'text-wechat-green' : 'text-black'}`}>Me</span>
+        <span className={`text-[10px] mt-0.5 ${current === 'TAB_ME' ? 'text-wechat-green' : 'text-black'}`}>{t('me')}</span>
       </button>
     </div>
   );
@@ -89,9 +90,11 @@ const AppContent = () => {
       case 'SETTINGS':
         return <Settings onNavigate={handleNavigate} onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
       case 'SETTINGS_GENERAL':
-        return <SettingsGeneral onBack={() => handleNavigate({ type: 'SETTINGS' })} />;
+        return <SettingsGeneral onBack={() => handleNavigate({ type: 'SETTINGS' })} onNavigate={handleNavigate} />;
+      case 'SETTINGS_LANGUAGE':
+        return <LanguageSettings onBack={() => handleNavigate({ type: 'SETTINGS_GENERAL' })} />;
       case 'SERVICES':
-        return <Services onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
+        return <Services onBack={() => handleNavigate({ type: 'TAB_ME' })} onNavigate={handleNavigate} />;
       case 'FAVORITES':
         return <Favorites onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
       case 'STICKER_GALLERY':
@@ -118,6 +121,8 @@ const AppContent = () => {
         return <RedPacketView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', id: viewState.userId, chatType: 'user' })} />;
       case 'MONEY_TRANSFER':
         return <TransferView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', id: viewState.userId, chatType: 'user' })} />;
+      case 'MONEY_CODE':
+        return <MoneyCodeView onBack={() => handleNavigate({ type: 'SERVICES' })} />;
       default:
         return <ChatList onNavigate={handleNavigate} />;
     }

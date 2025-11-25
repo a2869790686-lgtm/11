@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
@@ -107,7 +105,7 @@ const getPersonaReply = (userId: string, userMessage: string): string => {
 
 
 export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps) => {
-  const { friends, groups, currentUser, getChatHistory, addMessage, updateMessage, markAsRead, getUser } = useStore();
+  const { friends, groups, currentUser, getChatHistory, addMessage, updateMessage, markAsRead, getUser, t } = useStore();
   const [inputText, setInputText] = useState('');
   const [isAudioMode, setIsAudioMode] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -359,7 +357,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
             </button>
             
             {isAudioMode ? (
-            <button className="flex-1 bg-white border border-gray-300 rounded-md py-2 text-center font-medium active:bg-gray-200" onMouseDown={(e) => { e.preventDefault(); handleSendAudio("Voice message"); }}>Hold to Talk</button>
+            <button className="flex-1 bg-white border border-gray-300 rounded-md py-2 text-center font-medium active:bg-gray-200" onMouseDown={(e) => { e.preventDefault(); handleSendAudio(t('voice_message')); }}>{t('hold_to_talk')}</button>
             ) : (
             <input 
                 ref={inputRef}
@@ -373,7 +371,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
             
             <button onClick={toggleEmoji} className="p-1"><IconFace /></button>
             {inputText && !isAudioMode ? (
-                 <button onClick={handleSend} className="bg-wechat-green text-white px-3 py-1.5 rounded-md text-sm">Send</button>
+                 <button onClick={handleSend} className="bg-wechat-green text-white px-3 py-1.5 rounded-md text-sm">{t('send')}</button>
             ) : (
                 <button onClick={togglePlusMenu} className="p-1"><IconPlus /></button>
             )}

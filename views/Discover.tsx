@@ -1,7 +1,6 @@
-
-
 import React from 'react';
 import { ViewState } from '../types';
+import { useStore } from '../hooks/useStore';
 import { ScrollArea } from '../components/Layout';
 import { 
   IconMoments, 
@@ -30,17 +29,19 @@ const MenuItem = ({ icon, label, onClick, badge, subtext }: any) => (
 );
 
 export const Discover = ({ onNavigate }: DiscoverProps) => {
+  const { t } = useStore();
+
   return (
     <>
       <div className="bg-wechat-header h-14 px-4 flex items-center justify-between shrink-0 border-b border-wechat-divider sticky top-0 z-10">
-        <span className="font-semibold text-lg">Discover</span>
+        <span className="font-semibold text-lg">{t('discover')}</span>
       </div>
       <ScrollArea className="bg-[#EDEDED]">
         {/* Group 1: Moments */}
         <div className="mt-0">
           <MenuItem 
             icon={<div className="text-blue-500"><IconMoments /></div>} 
-            label="Moments" 
+            label={t('moments')}
             onClick={() => onNavigate({ type: 'MOMENTS' })} 
             badge={true}
           />
@@ -50,7 +51,7 @@ export const Discover = ({ onNavigate }: DiscoverProps) => {
         <div className="mt-2">
           <MenuItem 
             icon={<IconChannels />} 
-            label="Channels" 
+            label={t('channels')}
             onClick={() => onNavigate({ type: 'CHANNELS' })} 
             subtext="Hot"
           />
@@ -60,12 +61,12 @@ export const Discover = ({ onNavigate }: DiscoverProps) => {
         <div className="mt-2">
           <MenuItem 
             icon={<IconScan />} 
-            label="Scan" 
+            label={t('scan')}
             onClick={() => onNavigate({ type: 'DISCOVER_SCAN' })} 
           />
           <MenuItem 
             icon={<IconShake />} 
-            label="Shake" 
+            label={t('shake')}
             onClick={() => onNavigate({ type: 'DISCOVER_SHAKE' })} 
           />
         </div>
@@ -74,12 +75,12 @@ export const Discover = ({ onNavigate }: DiscoverProps) => {
         <div className="mt-2">
           <MenuItem 
             icon={<IconTopStories />} 
-            label="Top Stories" 
+            label={t('top_stories')}
             onClick={() => onNavigate({ type: 'DISCOVER_TOP_STORIES' })} 
           />
           <MenuItem 
             icon={<IconSearchDiscover />} 
-            label="Search" 
+            label={t('search')}
             onClick={() => onNavigate({ type: 'DISCOVER_SEARCH' })} 
           />
         </div>
@@ -88,7 +89,7 @@ export const Discover = ({ onNavigate }: DiscoverProps) => {
         <div className="mt-2">
           <MenuItem 
             icon={<IconGames />} 
-            label="Games" 
+            label={t('games')}
             onClick={() => onNavigate({ type: 'DISCOVER_GAMES' })} 
             subtext="New"
           />
@@ -98,7 +99,7 @@ export const Discover = ({ onNavigate }: DiscoverProps) => {
         <div className="mt-2">
           <MenuItem 
             icon={<IconMusic />} 
-            label="Music" 
+            label={t('music')}
             onClick={() => onNavigate({ type: 'DISCOVER_MUSIC' })} 
           />
         </div>
@@ -107,7 +108,7 @@ export const Discover = ({ onNavigate }: DiscoverProps) => {
         <div className="mt-2 mb-4">
           <MenuItem 
             icon={<IconMiniProgram />} 
-            label="Mini Programs" 
+            label={t('mini_programs')}
             onClick={() => onNavigate({ type: 'DISCOVER_MINI_PROGRAMS' })} 
           />
         </div>

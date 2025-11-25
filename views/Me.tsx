@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState } from '../types';
@@ -20,7 +18,7 @@ const MenuItem = ({ icon, label, value, onClick, isLink = true }: any) => (
 // --- Views ---
 
 export const Me = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) => {
-  const { currentUser } = useStore();
+  const { currentUser, t } = useStore();
 
   return (
     <>
@@ -36,8 +34,8 @@ export const Me = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) =>
           <div className="flex-1">
             <h2 className="text-xl font-bold mb-1">{currentUser.name}</h2>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">WeChat ID: {currentUser.wxid}</span>
-              <div className="text-gray-400 text-2xl mb-4">QrCode &gt;</div>
+              <span className="text-sm text-gray-500">{t('wechat_id')}: {currentUser.wxid}</span>
+              <div className="text-gray-400 text-2xl mb-4 text-sm flex items-center">{t('my_qr_code')} &gt;</div>
             </div>
           </div>
         </div>
@@ -45,7 +43,7 @@ export const Me = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) =>
         <div className="mb-2">
             <MenuItem 
                 icon="💰" 
-                label="Services" 
+                label={t('services')}
                 onClick={() => onNavigate({ type: 'SERVICES' })}
             />
         </div>
@@ -53,17 +51,17 @@ export const Me = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) =>
         <div className="mb-2">
             <MenuItem 
                 icon="❤️" 
-                label="Favorites" 
+                label={t('favorites')}
                 onClick={() => onNavigate({ type: 'FAVORITES' })}
             />
             <MenuItem 
                 icon="🖼️" 
-                label="Sticker Gallery" 
+                label={t('sticker_gallery')}
                 onClick={() => onNavigate({ type: 'STICKER_GALLERY' })}
             />
             <MenuItem 
                 icon="⚙️" 
-                label="Settings" 
+                label={t('settings')}
                 onClick={() => onNavigate({ type: 'SETTINGS' })}
             />
         </div>
@@ -73,7 +71,7 @@ export const Me = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) =>
 };
 
 export const MyProfile = ({ onNavigate, onBack }: { onNavigate: (view: ViewState) => void, onBack: () => void }) => {
-  const { currentUser, updateCurrentUser } = useStore();
+  const { currentUser, updateCurrentUser, t } = useStore();
 
   const handleRandomizeAvatar = () => {
     // Simulating changing avatar by picking a random seed
@@ -83,30 +81,30 @@ export const MyProfile = ({ onNavigate, onBack }: { onNavigate: (view: ViewState
 
   return (
     <div className="flex flex-col h-full bg-[#EDEDED]">
-      <Header title="My Profile" onBack={onBack} />
+      <Header title="" onBack={onBack} />
       <ScrollArea className="bg-[#EDEDED]">
         <div className="mt-0 border-t border-wechat-divider">
           <div onClick={handleRandomizeAvatar} className="flex items-center px-4 py-3 bg-white border-b border-wechat-divider active:bg-gray-100 cursor-pointer">
-             <span className="flex-1 text-base text-black">Profile Photo</span>
+             <span className="flex-1 text-base text-black">{t('profile_photo')}</span>
              <img src={currentUser.avatar} className="w-16 h-16 rounded-lg mr-2" />
              <span className="text-gray-400">{'>'}</span>
           </div>
           <MenuItem 
-            label="Name" 
+            label={t('name')} 
             value={currentUser.name} 
             onClick={() => onNavigate({ type: 'EDIT_NAME' })} 
           />
           <MenuItem 
-            label="WeChat ID" 
+            label={t('wechat_id')} 
             value={currentUser.wxid} 
             isLink={false}
           />
-          <MenuItem label="My QR Code" icon="🏁" />
-          <MenuItem label="More" />
+          <MenuItem label={t('my_qr_code')} icon="🏁" />
+          <MenuItem label={t('more')} />
         </div>
         
         <div className="mt-2">
-           <MenuItem label="Incoming Call Ringtone" />
+           <MenuItem label={t('incoming_call_ringtone')} />
         </div>
       </ScrollArea>
     </div>
@@ -114,7 +112,7 @@ export const MyProfile = ({ onNavigate, onBack }: { onNavigate: (view: ViewState
 };
 
 export const EditName = ({ onBack }: { onBack: () => void }) => {
-  const { currentUser, updateCurrentUser } = useStore();
+  const { currentUser, updateCurrentUser, t } = useStore();
   const [name, setName] = useState(currentUser.name);
 
   const handleSave = () => {
@@ -127,14 +125,14 @@ export const EditName = ({ onBack }: { onBack: () => void }) => {
   return (
     <div className="flex flex-col h-full bg-[#EDEDED]">
       <div className="flex items-center justify-between px-4 h-14 bg-[#EDEDED] shrink-0">
-        <button onClick={onBack} className="text-black text-base">Cancel</button>
-        <span className="font-semibold text-lg">Set Name</span>
+        <button onClick={onBack} className="text-black text-base">{t('cancel')}</button>
+        <span className="font-semibold text-lg">{t('set_name')}</span>
         <button 
           onClick={handleSave}
           disabled={!name.trim() || name === currentUser.name}
           className={`px-3 py-1.5 rounded text-white text-sm font-medium ${(!name.trim() || name === currentUser.name) ? 'bg-gray-300' : 'bg-wechat-green'}`}
         >
-          Save
+          {t('save')}
         </button>
       </div>
 
@@ -145,7 +143,7 @@ export const EditName = ({ onBack }: { onBack: () => void }) => {
              className="w-full text-base outline-none py-1"
              value={name}
              onChange={e => setName(e.target.value)}
-             placeholder="Enter your name"
+             placeholder={t('enter_name')}
            />
         </div>
         <p className="mt-2 text-gray-400 text-xs">Good names are easier to remember.</p>

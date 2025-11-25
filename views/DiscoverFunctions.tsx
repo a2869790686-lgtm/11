@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Header, ScrollArea } from '../components/Layout';
 import { IconMore, IconCamera } from '../components/Icons';
@@ -7,13 +6,14 @@ import { ViewState } from '../types';
 
 // --- Scan View ---
 export const ScanView = ({ onBack }: { onBack: () => void }) => {
+    const { t } = useStore();
     return (
         <div className="flex flex-col h-full bg-black relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 h-16 text-white">
                 <button onClick={onBack} className="p-2">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
-                <span className="text-lg font-medium">Scan QR Code</span>
+                <span className="text-lg font-medium">{t('scan')}</span>
                 <button><IconMore /></button>
             </div>
             
@@ -36,7 +36,7 @@ export const ScanView = ({ onBack }: { onBack: () => void }) => {
 
             {/* Bottom Tabs */}
             <div className="h-24 bg-black/80 flex items-center justify-around text-white/60 text-xs z-20 shrink-0">
-                <div className="flex flex-col items-center gap-2 text-white"><div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">📷</div>Scan</div>
+                <div className="flex flex-col items-center gap-2 text-white"><div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">📷</div>{t('scan')}</div>
                 <div className="flex flex-col items-center gap-2"><div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">🖼️</div>Image</div>
                 <div className="flex flex-col items-center gap-2"><div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">🌐</div>Translate</div>
             </div>
@@ -58,6 +58,7 @@ export const ScanView = ({ onBack }: { onBack: () => void }) => {
 
 // --- Shake View ---
 export const ShakeView = ({ onBack }: { onBack: () => void }) => {
+    const { t } = useStore();
     const [shaking, setShaking] = useState(false);
 
     const handleShake = () => {
@@ -74,8 +75,8 @@ export const ShakeView = ({ onBack }: { onBack: () => void }) => {
                 <button onClick={(e) => { e.stopPropagation(); onBack(); }} className="p-2">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
-                <span className="text-lg font-medium">Shake</span>
-                <button onClick={(e) => { e.stopPropagation(); }}><div className="text-sm border border-white/30 rounded px-2 py-0.5">Settings</div></button>
+                <span className="text-lg font-medium">{t('shake')}</span>
+                <button onClick={(e) => { e.stopPropagation(); }}><div className="text-sm border border-white/30 rounded px-2 py-0.5">{t('settings')}</div></button>
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center pb-20">
@@ -96,7 +97,7 @@ export const ShakeView = ({ onBack }: { onBack: () => void }) => {
                  </div>
                  <div className="flex flex-col items-center text-gray-500">
                     <div className="text-xl">🎵</div>
-                    <span className="text-xs mt-1">Music</span>
+                    <span className="text-xs mt-1">{t('music')}</span>
                  </div>
                  <div className="flex flex-col items-center text-gray-500">
                     <div className="text-xl">📺</div>
@@ -109,9 +110,10 @@ export const ShakeView = ({ onBack }: { onBack: () => void }) => {
 
 // --- Games View ---
 export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (v: ViewState) => void }) => {
+    const { t } = useStore();
     return (
         <div className="flex flex-col h-full bg-[#EDEDED]">
-            <Header title="Games" onBack={onBack} rightAction={<div className="text-sm text-blue-600">My Games</div>} />
+            <Header title={t('games')} onBack={onBack} rightAction={<div className="text-sm text-blue-600">My Games</div>} />
             <ScrollArea className="bg-[#EDEDED]">
                 {/* Banner */}
                 <div className="bg-white p-4 mb-2">
@@ -123,7 +125,7 @@ export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNaviga
 
                 {/* --- NEW GAME: WARM HOME --- */}
                 <div className="bg-white p-4 mb-2">
-                    <h3 className="text-sm font-bold text-gray-500 mb-3">RECOMMENDED</h3>
+                    <h3 className="text-sm font-bold text-gray-500 mb-3">{t('recommended')}</h3>
                     <div 
                         className="w-full bg-gradient-to-br from-[#87CEEB] to-[#98FB98] rounded-xl p-4 flex items-center cursor-pointer shadow-lg transform active:scale-95 transition-all"
                         onClick={() => onNavigate({ type: 'WARM_HOME_GAME' })}
@@ -132,7 +134,7 @@ export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNaviga
                             🏡
                         </div>
                         <div className="flex-1 text-white">
-                            <h3 className="text-xl font-bold drop-shadow-md">暖暖家园 (Warm Home)</h3>
+                            <h3 className="text-xl font-bold drop-shadow-md">{t('warm_home')} (Warm Home)</h3>
                             <p className="text-sm opacity-90 drop-shadow">Build your dream garden! 🌻🐕</p>
                             <div className="flex gap-2 mt-2">
                                 <span className="bg-white/20 text-xs px-2 py-0.5 rounded">Relaxing</span>
@@ -140,14 +142,14 @@ export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNaviga
                             </div>
                         </div>
                         <div className="bg-yellow-400 text-yellow-900 font-bold px-4 py-2 rounded-full shadow-md text-sm">
-                            PLAY
+                            {t('play')}
                         </div>
                     </div>
                 </div>
 
                 {/* Friends Playing */}
                 <div className="bg-white p-4 mb-2">
-                    <h3 className="text-sm font-bold text-gray-500 mb-3">FRIENDS ARE PLAYING</h3>
+                    <h3 className="text-sm font-bold text-gray-500 mb-3">{t('friends_playing')}</h3>
                     <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                         {[1,2,3,4].map(i => (
                             <div key={i} className="flex flex-col items-center min-w-[60px]">
@@ -160,7 +162,7 @@ export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNaviga
 
                  {/* Popular */}
                 <div className="bg-white p-4 mb-2">
-                    <h3 className="text-sm font-bold text-gray-500 mb-3">POPULAR</h3>
+                    <h3 className="text-sm font-bold text-gray-500 mb-3">{t('popular')}</h3>
                     {[1,2,3].map(i => (
                         <div key={i} className="flex items-center mb-4 last:mb-0">
                              <div className="w-16 h-16 rounded-xl bg-gray-200 mr-3 overflow-hidden">
@@ -170,7 +172,7 @@ export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNaviga
                                  <h4 className="font-medium text-black">Super Game {i}</h4>
                                  <p className="text-xs text-gray-400">Action • 5M Players</p>
                              </div>
-                             <button className="px-4 py-1.5 bg-gray-100 text-green-600 text-sm font-medium rounded-full">Play</button>
+                             <button className="px-4 py-1.5 bg-gray-100 text-green-600 text-sm font-medium rounded-full">{t('play')}</button>
                         </div>
                     ))}
                 </div>
@@ -181,14 +183,15 @@ export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNaviga
 
 // --- Mini Programs View ---
 export const MiniProgramsView = ({ onBack }: { onBack: () => void }) => {
+    const { t } = useStore();
     return (
         <div className="flex flex-col h-full bg-[#EDEDED]">
-            <Header title="Mini Programs" onBack={onBack} rightAction={<IconMore />} />
+            <Header title={t('mini_programs')} onBack={onBack} rightAction={<IconMore />} />
             <ScrollArea className="bg-[#EDEDED]">
                 <div className="p-2">
                     {/* Search */}
                     <div className="bg-white rounded p-2 text-center text-gray-400 text-sm mb-4 flex items-center justify-center">
-                        🔍 Search Mini Programs
+                        🔍 {t('search')} {t('mini_programs')}
                     </div>
 
                     {/* Recently Used */}
@@ -207,7 +210,7 @@ export const MiniProgramsView = ({ onBack }: { onBack: () => void }) => {
                     </div>
 
                     {/* Categories */}
-                    <h3 className="text-xs text-gray-500 mb-2 px-2">RECOMMENDED</h3>
+                    <h3 className="text-xs text-gray-500 mb-2 px-2">{t('recommended')}</h3>
                     <div className="bg-white rounded-lg p-4">
                         {[1,2,3].map(i => (
                             <div key={i} className="flex items-center py-3 border-b border-gray-100 last:border-0">
@@ -228,13 +231,14 @@ export const MiniProgramsView = ({ onBack }: { onBack: () => void }) => {
 
 // --- Search / Top Stories View (Combined Mock) ---
 export const SearchAndNewsView = ({ onBack, title }: { onBack: () => void, title: string }) => {
+    const { t } = useStore();
     return (
         <div className="flex flex-col h-full bg-white">
             <div className="flex items-center px-2 py-2 border-b border-gray-100">
                 <button onClick={onBack} className="p-2"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
                 <div className="flex-1 bg-gray-100 rounded-md flex items-center px-3 py-1.5 mx-2">
                     <span className="text-gray-400 mr-2">🔍</span>
-                    <input type="text" placeholder="Search" className="bg-transparent outline-none flex-1 text-sm" />
+                    <input type="text" placeholder={t('search')} className="bg-transparent outline-none flex-1 text-sm" />
                 </div>
             </div>
             <ScrollArea className="bg-white">
@@ -246,7 +250,7 @@ export const SearchAndNewsView = ({ onBack, title }: { onBack: () => void, title
                         ))}
                     </div>
 
-                    <h3 className="text-xs font-bold text-gray-400 mb-3">TOP STORIES</h3>
+                    <h3 className="text-xs font-bold text-gray-400 mb-3">{t('top_stories').toUpperCase()}</h3>
                     {[1,2,3,4].map(i => (
                          <div key={i} className="flex py-3 border-b border-gray-100">
                              <div className="flex-1 pr-2">

@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Header, ScrollArea } from '../components/Layout';
+import { useStore } from '../hooks/useStore';
 import { ViewState } from '../types';
 
 const SettingsItem = ({ label, value, onClick, isLink = true, centered = false, className = '' }: any) => (
@@ -21,12 +21,10 @@ const SettingsItem = ({ label, value, onClick, isLink = true, centered = false, 
 );
 
 export const Settings = ({ onNavigate, onBack }: { onNavigate: (v: ViewState) => void, onBack: () => void }) => {
-    
+    const { t } = useStore();
+
     const handleLogout = () => {
-        if(window.confirm("Log out of WeChat?")) {
-            // In a real app we would clear auth tokens.
-            // Here we just reload to simulate a reset, or clear local storage if we wanted to fully reset.
-            // keeping it simple to just reload for effect.
+        if(window.confirm(t('log_out') + "?")) {
             localStorage.removeItem('wx_current_user');
             window.location.reload();
         }
@@ -34,69 +32,114 @@ export const Settings = ({ onNavigate, onBack }: { onNavigate: (v: ViewState) =>
 
     return (
         <div className="flex flex-col h-full bg-[#EDEDED]">
-            <Header title="Settings" onBack={onBack} />
+            <Header title={t('settings')} onBack={onBack} />
             <ScrollArea className="bg-[#EDEDED]">
                 <div className="mt-0">
-                    <SettingsItem label="Account Security" />
+                    <SettingsItem label={t('account_security')} />
                 </div>
 
                 <div className="mt-2">
-                    <SettingsItem label="Message Notifications" />
-                    <SettingsItem label="Friends' Permissions" />
-                    <SettingsItem label="Personal Information Collection List" />
-                    <SettingsItem label="Third-Party Lists" />
+                    <SettingsItem label={t('message_notifications')} />
+                    <SettingsItem label={t('friends_permissions')} />
+                    <SettingsItem label={t('personal_info_collection')} />
+                    <SettingsItem label={t('third_party_lists')} />
                 </div>
                 
                 <div className="mt-2">
                     <SettingsItem 
-                        label="General" 
+                        label={t('general')} 
                         onClick={() => onNavigate({ type: 'SETTINGS_GENERAL' })}
                     />
-                    <SettingsItem label="Privacy" />
+                    <SettingsItem label={t('privacy')} />
                 </div>
 
                 <div className="mt-2">
-                    <SettingsItem label="Help & Feedback" />
-                    <SettingsItem label="About WeChat" value="Version 8.0.42" />
+                    <SettingsItem label={t('help_feedback')} />
+                    <SettingsItem label={t('about')} value="Version 8.0.42" />
                 </div>
 
                  <div className="mt-2">
-                    <SettingsItem label="Switch Account" />
+                    <SettingsItem label={t('switch_account')} />
                 </div>
 
                 <div className="mt-2 mb-8">
-                    <SettingsItem label="Log Out" centered onClick={handleLogout} className="text-black" />
+                    <SettingsItem label={t('log_out')} centered onClick={handleLogout} className="text-black" />
                 </div>
             </ScrollArea>
         </div>
     );
 }
 
-export const SettingsGeneral = ({ onBack }: { onBack: () => void }) => {
+export const SettingsGeneral = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (v: ViewState) => void }) => {
+    const { language, t } = useStore();
     return (
         <div className="flex flex-col h-full bg-[#EDEDED]">
-            <Header title="General" onBack={onBack} />
+            <Header title={t('general')} onBack={onBack} />
             <ScrollArea className="bg-[#EDEDED]">
                 <div className="mt-0">
-                    <SettingsItem label="Appearance" value="System Default" />
-                    <SettingsItem label="Dark Mode" value="Off" />
+                    <SettingsItem label={t('appearance')} value={t('system_default')} />
+                    <SettingsItem label={t('dark_mode')} value={t('off')} />
                 </div>
 
                 <div className="mt-2">
-                    <SettingsItem label="Language" value="English" />
-                    <SettingsItem label="Font Size" />
+                    <SettingsItem 
+                        label={t('language')} 
+                        value={language === 'en' ? 'English' : '简体中文'} 
+                        onClick={() => onNavigate({ type: 'SETTINGS_LANGUAGE' })}
+                    />
+                    <SettingsItem label={t('font_size')} />
                 </div>
 
                  <div className="mt-2">
-                    <SettingsItem label="Photos, Videos, Files, and Calls" />
-                    <SettingsItem label="Manage Storage" />
-                    <SettingsItem label="Tools" />
+                    <SettingsItem label={t('manage_storage')} />
+                    <SettingsItem label={t('tools')} />
                 </div>
 
                 <div className="mt-2">
-                     <SettingsItem label="WeChat Pay" />
+                     <SettingsItem label={t('wechat_pay')} />
                 </div>
             </ScrollArea>
         </div>
     );
 }
+
+export const LanguageSettings = ({ onBack }: { onBack: () => void }) => {
+    const { language, setLanguage, t } = useStore();
+    const [selected, setSelected] = React.useState<'en' | 'zh'>(language);
+
+    const handleSave = () => {
+        setLanguage(selected);
+        onBack();
+    };
+
+    const LanguageOption = ({ val, label }: { val: 'en' | 'zh', label: string }) => (
+        <div 
+            onClick={() => setSelected(val)}
+            className="flex items-center px-4 py-3 bg-white border-b border-wechat-divider cursor-pointer"
+        >
+            <span className="flex-1 text-base text-black">{label}</span>
+            {selected === val && <span className="text-wechat-green text-lg">✔</span>}
+        </div>
+    );
+
+    return (
+        <div className="flex flex-col h-full bg-[#EDEDED]">
+             <div className="flex items-center justify-between px-4 h-14 bg-[#EDEDED] shrink-0 border-b border-gray-200">
+                <button onClick={onBack} className="text-black text-base">{t('cancel')}</button>
+                <span className="font-semibold text-lg">{t('language')}</span>
+                <button 
+                  onClick={handleSave}
+                  className="px-3 py-1.5 rounded text-white text-sm font-medium bg-wechat-green"
+                >
+                  {t('done')}
+                </button>
+            </div>
+            <ScrollArea className="bg-[#EDEDED]">
+                <div className="mt-0">
+                    <LanguageOption val="zh" label="简体中文" />
+                    <LanguageOption val="en" label="English" />
+                </div>
+            </ScrollArea>
+        </div>
+    );
+};
