@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState } from '../types';
@@ -18,7 +20,7 @@ const formatTime = (ts: number) => {
 };
 
 export const ChatList = ({ onNavigate }: ChatListProps) => {
-  const { getChatSessions, friends } = useStore();
+  const { getChatSessions } = useStore();
   const sessions = getChatSessions();
 
   return (
@@ -39,16 +41,14 @@ export const ChatList = ({ onNavigate }: ChatListProps) => {
           </div>
         ) : (
           sessions.map(session => {
-            const friend = friends.find(f => f.id === session.userId);
-            if (!friend) return null;
             return (
               <div 
-                key={session.userId}
-                onClick={() => onNavigate({ type: 'CHAT_DETAIL', userId: session.userId })}
+                key={session.id}
+                onClick={() => onNavigate({ type: 'CHAT_DETAIL', id: session.id, chatType: session.type })}
                 className="flex items-center px-4 py-3 bg-white hover:bg-gray-50 border-b border-wechat-divider cursor-pointer"
               >
                 <div className="relative">
-                  <img src={friend.avatar} alt={friend.name} className="w-12 h-12 rounded-lg object-cover" />
+                  <img src={session.avatar} alt={session.name} className="w-12 h-12 rounded-lg object-cover bg-gray-200" />
                   {session.unreadCount > 0 && (
                     <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
                       {session.unreadCount}
@@ -58,7 +58,7 @@ export const ChatList = ({ onNavigate }: ChatListProps) => {
                 
                 <div className="ml-3 flex-1 min-w-0">
                   <div className="flex justify-between items-baseline">
-                    <h3 className="text-base font-normal text-black truncate">{friend.name}</h3>
+                    <h3 className="text-base font-normal text-black truncate">{session.name}</h3>
                     {session.lastMessage && (
                       <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
                         {formatTime(session.lastMessage.timestamp)}

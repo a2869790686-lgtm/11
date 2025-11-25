@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { ViewState } from '../types';
 import { ScrollArea } from '../components/Layout';
@@ -10,7 +11,8 @@ import {
   IconTopStories, 
   IconSearchDiscover, 
   IconGames, 
-  IconMiniProgram 
+  IconMiniProgram,
+  IconMusic
 } from '../components/Icons';
 
 interface DiscoverProps {
@@ -91,8 +93,17 @@ export const Discover = ({ onNavigate }: DiscoverProps) => {
             subtext="New"
           />
         </div>
+
+        {/* Group 6: Music (New) */}
+        <div className="mt-2">
+          <MenuItem 
+            icon={<IconMusic />} 
+            label="Music" 
+            onClick={() => onNavigate({ type: 'DISCOVER_MUSIC' })} 
+          />
+        </div>
         
-        {/* Group 6: Mini Programs */}
+        {/* Group 7: Mini Programs */}
         <div className="mt-2 mb-4">
           <MenuItem 
             icon={<IconMiniProgram />} 

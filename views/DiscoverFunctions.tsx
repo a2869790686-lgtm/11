@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Header, ScrollArea } from '../components/Layout';
 import { IconMore, IconCamera } from '../components/Icons';
+import { useStore } from '../hooks/useStore';
+import { ViewState } from '../types';
 
 // --- Scan View ---
 export const ScanView = ({ onBack }: { onBack: () => void }) => {
@@ -106,7 +108,7 @@ export const ShakeView = ({ onBack }: { onBack: () => void }) => {
 };
 
 // --- Games View ---
-export const GamesView = ({ onBack }: { onBack: () => void }) => {
+export const GamesView = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (v: ViewState) => void }) => {
     return (
         <div className="flex flex-col h-full bg-[#EDEDED]">
             <Header title="Games" onBack={onBack} rightAction={<div className="text-sm text-blue-600">My Games</div>} />
@@ -116,6 +118,30 @@ export const GamesView = ({ onBack }: { onBack: () => void }) => {
                     <div className="w-full h-40 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex flex-col items-center justify-center text-white shadow-md">
                         <h2 className="text-2xl font-bold">WeChat Games</h2>
                         <p className="opacity-80">Play with friends</p>
+                    </div>
+                </div>
+
+                {/* --- NEW GAME: WARM HOME --- */}
+                <div className="bg-white p-4 mb-2">
+                    <h3 className="text-sm font-bold text-gray-500 mb-3">RECOMMENDED</h3>
+                    <div 
+                        className="w-full bg-gradient-to-br from-[#87CEEB] to-[#98FB98] rounded-xl p-4 flex items-center cursor-pointer shadow-lg transform active:scale-95 transition-all"
+                        onClick={() => onNavigate({ type: 'WARM_HOME_GAME' })}
+                    >
+                        <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center text-4xl mr-4 border-2 border-white">
+                            🏡
+                        </div>
+                        <div className="flex-1 text-white">
+                            <h3 className="text-xl font-bold drop-shadow-md">暖暖家园 (Warm Home)</h3>
+                            <p className="text-sm opacity-90 drop-shadow">Build your dream garden! 🌻🐕</p>
+                            <div className="flex gap-2 mt-2">
+                                <span className="bg-white/20 text-xs px-2 py-0.5 rounded">Relaxing</span>
+                                <span className="bg-white/20 text-xs px-2 py-0.5 rounded">Simulation</span>
+                            </div>
+                        </div>
+                        <div className="bg-yellow-400 text-yellow-900 font-bold px-4 py-2 rounded-full shadow-md text-sm">
+                            PLAY
+                        </div>
                     </div>
                 </div>
 

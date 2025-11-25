@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { StoreProvider } from './hooks/useStore';
 import { Screen } from './components/Layout';
@@ -9,19 +8,23 @@ import { Discover } from './views/Discover';
 import { ScanView, ShakeView, GamesView, MiniProgramsView, SearchAndNewsView } from './views/DiscoverFunctions';
 import { Me, MyProfile, EditName } from './views/Me';
 import { ChatDetail } from './views/ChatDetail';
-import { Moments } from './views/Moments';
+import { ChatInfo } from './views/ChatInfo';
+import { GroupList } from './views/GroupList';
+import { Moments, UserMoments } from './views/Moments';
 import { Channels } from './views/Channels';
 import { Settings, SettingsGeneral } from './views/Settings';
 import { Services } from './views/Services';
 import { Favorites } from './views/Favorites';
 import { StickerGallery } from './views/StickerGallery';
 import { RedPacketView, TransferView } from './views/WalletFunctions';
+import { MusicView } from './views/Music';
+import { WarmHomeGame } from './views/WarmHomeGame';
 import { IconChat, IconContacts, IconDiscover, IconMe } from './components/Icons';
 import { ViewState } from './types';
 
 const TabBar = ({ current, onSelect }: { current: string, onSelect: (view: ViewState) => void }) => {
   return (
-    <div className="h-14 bg-[#F7F7F7] border-t border-[#E5E5E5] flex justify-around items-center shrink-0 pb-1">
+    <div className="h-14 bg-[#F7F7F7] border-t border-[#E5E5E5] flex justify-around items-center shrink-0 pb-1 pb-[env(safe-area-inset-bottom)]">
       <button onClick={() => onSelect({ type: 'TAB_CHATS' })} className="flex flex-col items-center justify-center w-full h-full">
         <IconChat active={current === 'TAB_CHATS'} />
         <span className={`text-[10px] mt-0.5 ${current === 'TAB_CHATS' ? 'text-wechat-green' : 'text-black'}`}>Chats</span>
@@ -64,9 +67,15 @@ const AppContent = () => {
       case 'TAB_ME':
         return <Me onNavigate={handleNavigate} />;
       case 'CHAT_DETAIL':
-        return <ChatDetail userId={viewState.userId} onBack={() => handleNavigate({ type: 'TAB_CHATS' })} onNavigate={handleNavigate} />;
+        return <ChatDetail id={viewState.id} chatType={viewState.chatType} onBack={() => handleNavigate({ type: 'TAB_CHATS' })} onNavigate={handleNavigate} />;
+      case 'CHAT_INFO':
+        return <ChatInfo id={viewState.id} chatType={viewState.chatType} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', id: viewState.id, chatType: viewState.chatType })} onNavigate={handleNavigate} />;
+      case 'GROUP_LIST':
+        return <GroupList onBack={() => handleNavigate({ type: 'TAB_CONTACTS' })} onNavigate={handleNavigate} />;
       case 'MOMENTS':
-        return <Moments onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
+        return <Moments onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} onNavigate={handleNavigate} />;
+      case 'USER_MOMENTS':
+        return <UserMoments userId={viewState.userId} onBack={() => handleNavigate({ type: 'USER_PROFILE', userId: viewState.userId })} />;
       case 'CHANNELS':
         return <Channels onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
       case 'ADD_FRIEND':
@@ -97,14 +106,18 @@ const AppContent = () => {
       case 'DISCOVER_SEARCH':
         return <SearchAndNewsView title="Search" onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
       case 'DISCOVER_GAMES':
-        return <GamesView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
+        return <GamesView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} onNavigate={handleNavigate} />;
+      case 'WARM_HOME_GAME':
+        return <WarmHomeGame onBack={() => handleNavigate({ type: 'DISCOVER_GAMES' })} />;
       case 'DISCOVER_MINI_PROGRAMS':
         return <MiniProgramsView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
+      case 'DISCOVER_MUSIC':
+        return <MusicView onBack={() => handleNavigate({ type: 'TAB_DISCOVER' })} />;
       // Wallet Views
       case 'MONEY_RED_PACKET':
-        return <RedPacketView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', userId: viewState.userId })} />;
+        return <RedPacketView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', id: viewState.userId, chatType: 'user' })} />;
       case 'MONEY_TRANSFER':
-        return <TransferView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', userId: viewState.userId })} />;
+        return <TransferView userId={viewState.userId} onBack={() => handleNavigate({ type: 'CHAT_DETAIL', id: viewState.userId, chatType: 'user' })} />;
       default:
         return <ChatList onNavigate={handleNavigate} />;
     }

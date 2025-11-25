@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 
 export const IconChat = ({ active }: { active?: boolean }) => (
@@ -49,10 +50,17 @@ export const IconCamera = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
 );
 
+// The iconic WeChat Moments Aperture
 export const IconMoments = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M8 12l2 2 4-4" />
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="#E0E0E0" opacity="0.3"/>
+    <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="none"/>
+    <g transform="rotate(45 12 12)">
+        <path d="M12 4C7.58 4 4 7.58 4 12h2c0-3.31 2.69-6 6-6V4z" fill="#1AAD19"/>
+        <path d="M20 12c0-3.31-2.69-6-6-6v-2c4.42 0 8 3.58 8 8h-2z" fill="#10AEFF"/>
+        <path d="M12 20c3.31 0 6-2.69 6-6h2c0 4.42-3.58 8-8 8v-2z" fill="#FFBE00"/>
+        <path d="M4 12c0 3.31 2.69 6 6 6v2c-4.42 0-8-3.58-8-8h2z" fill="#F03F35"/>
+    </g>
   </svg>
 );
 
@@ -73,7 +81,12 @@ export const IconRefresh = () => (
     </svg>
 );
 
-// New Icons for Discover
+export const IconBell = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+    </svg>
+);
+
 export const IconChannels = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="orange" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8" fill="orange" stroke="none"></polygon>
@@ -131,4 +144,31 @@ export const IconTransfer = () => (
     <path d="M7 21.9l-4-4 4-4" />
     <path d="M21 13v1a4 4 0 0 1-4 4H3" />
   </svg>
+);
+
+export const IconGroup = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+  </svg>
+);
+
+export const IconMusic = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2CB266" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle>
+  </svg>
+);
+
+export const IconPlay = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+    </svg>
+);
+
+export const IconPause = () => (
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>
+    </svg>
 );

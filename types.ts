@@ -6,6 +6,15 @@ export interface User {
   avatar: string;
   phone: string;
   wxid: string;
+  signature?: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  avatar: string; // usually a composite or specific image
+  members: string[]; // array of User IDs
+  notice?: string;
 }
 
 export interface Message {
@@ -39,8 +48,24 @@ export interface Post {
   timestamp: number;
 }
 
+export interface Notification {
+    id: string;
+    type: 'like' | 'comment';
+    userId: string;
+    userName: string;
+    userAvatar: string;
+    postId: string;
+    postImage?: string; // Thumbnail of the post
+    content?: string; // Comment content
+    timestamp: number;
+    read: boolean;
+}
+
 export interface ChatSession {
-  userId: string; // The other person
+  id: string; // User ID or Group ID
+  type: 'user' | 'group';
+  name: string;
+  avatar: string;
   lastMessage: Message | null;
   unreadCount: number;
 }
@@ -50,8 +75,11 @@ export type ViewState =
   | { type: 'TAB_CONTACTS' }
   | { type: 'TAB_DISCOVER' }
   | { type: 'TAB_ME' }
-  | { type: 'CHAT_DETAIL', userId: string }
+  | { type: 'CHAT_DETAIL', id: string, chatType: 'user' | 'group' }
+  | { type: 'CHAT_INFO', id: string, chatType: 'user' | 'group' } // Chat Details / Group Settings
+  | { type: 'GROUP_LIST' }
   | { type: 'MOMENTS' }
+  | { type: 'USER_MOMENTS', userId: string }
   | { type: 'MOMENTS_PUBLISH' }
   | { type: 'ADD_FRIEND' }
   | { type: 'USER_PROFILE', userId: string }
@@ -68,6 +96,8 @@ export type ViewState =
   | { type: 'DISCOVER_TOP_STORIES' }
   | { type: 'DISCOVER_SEARCH' }
   | { type: 'DISCOVER_GAMES' }
+  | { type: 'WARM_HOME_GAME' }
   | { type: 'DISCOVER_MINI_PROGRAMS' }
+  | { type: 'DISCOVER_MUSIC' }
   | { type: 'MONEY_RED_PACKET', userId: string }
   | { type: 'MONEY_TRANSFER', userId: string };
