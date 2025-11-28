@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
@@ -113,6 +114,19 @@ const TOPICS = {
             "Flag屹立不倒：明天开始减肥！",
         ],
         comments: ["抱抱", "好看！", "怎么了？", "求链接", "太真实了", "哈哈哈哈", "Cute!"]
+    },
+    ACG: {
+        keywords: ['anime', 'manga', 'cosplay', 'gaming', 'figure'],
+        texts: [
+            "新番更新了！这一集也太好看了吧！😭🔥",
+            "漫展返图，今天集邮了好多小姐姐~ 📸✨",
+            "抽卡又歪了... 非酋的流泪日常。📉",
+            "为了守护这个世界！🗡️",
+            "手办终于到货了，做工太精致了！📦💖",
+            "今晚熬夜肝活动，不拿到奖励不睡觉！🎮",
+            "即使是奇迹，我也要创造给你看！💫",
+        ],
+        comments: ["好耶！", "老婆！", "吸欧气", "单推人集合", "kksk", "太强了"]
     }
 };
 
@@ -258,6 +272,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
           possibleComments = TOPICS.TRAVEL.comments;
       } else if (lowerContent.includes('sad') || lowerContent.includes('cry')) {
           possibleComments = ["Hug hug", "Don't be sad", "Call me if you need"];
+      } else if (lowerContent.includes('anime') || lowerContent.includes('game') || lowerContent.includes('cosplay')) {
+          possibleComments = TOPICS.ACG.comments;
       }
 
       const interactorsCount = Math.floor(Math.random() * 3) + 1; // 1-3 friends interact
@@ -363,6 +379,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
             else if (author.name.includes('妈') || author.name.includes('姨') || author.name.includes('叔') || author.name.includes('伯')) categoryKey = 'OLDER_GEN';
             else if (author.name.includes('置业') || author.name.includes('代购') || author.name.includes('批发') || author.name.includes('保险')) categoryKey = 'SALES';
             else if (author.name.includes('momo') || author.name.includes('同学') || author.name.includes('L')) categoryKey = 'YOUTH';
+            else if (author.id === '30' || author.id === '31' || author.id === '32') categoryKey = 'ACG';
             else {
                 // Randomly assign other topics for generic users
                 const keys: (keyof typeof TOPICS)[] = ['FOOD', 'TRAVEL', 'YOUTH', 'WORK'];

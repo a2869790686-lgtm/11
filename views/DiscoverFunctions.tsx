@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Header, ScrollArea } from '../components/Layout';
 import { IconMore, IconCamera } from '../components/Icons';
@@ -62,13 +60,29 @@ export const ScanView = ({ onBack }: { onBack: () => void }) => {
 export const ShakeView = ({ onBack }: { onBack: () => void }) => {
     const { t } = useStore();
     const [shaking, setShaking] = useState(false);
+    const [count, setCount] = useState(0);
+
+    // Watch count changes for the Easter egg
+    useEffect(() => {
+        if (count >= 3) {
+            // Use a slight timeout to ensure UI updates first
+            setTimeout(() => {
+                alert("想要通过摇一摇在末日里找到幸存者嘛...");
+                setCount(0); // Reset
+            }, 100);
+        }
+    }, [count]);
 
     const handleShake = () => {
         if (shaking) return;
         setShaking(true);
         // Simulate haptic/sound
         if (navigator.vibrate) navigator.vibrate(200);
-        setTimeout(() => setShaking(false), 1000);
+        
+        setTimeout(() => {
+            setShaking(false);
+            setCount(prev => prev + 1);
+        }, 800);
     };
 
     return (
@@ -90,6 +104,7 @@ export const ShakeView = ({ onBack }: { onBack: () => void }) => {
                     />
                 </div>
                 <p className="text-white/50 mt-8 text-sm">Shake your phone to find people</p>
+                <p className="text-white/30 text-xs mt-2">(Shake Count: {count})</p>
             </div>
 
             <div className="h-20 bg-[#2E3132] flex justify-around items-center border-t border-white/10 shrink-0">

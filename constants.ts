@@ -267,6 +267,11 @@ export const INITIAL_FRIENDS: User[] = [
   { id: '22', name: '班长', avatar: 'https://picsum.photos/seed/book/200/200', phone: '13900000022', wxid: 'class_monitor', signature: '好好学习，天天向上' },
   { id: '23', name: 'AAA 纯手工水饺', avatar: 'https://picsum.photos/seed/dumplings_ad/200/200', phone: '13900000023', wxid: 'dumplings_sell', signature: '皮薄馅大，童叟无欺' },
   { id: '24', name: '铲屎官', avatar: 'https://picsum.photos/seed/cat_face/200/200', phone: '13900000024', wxid: 'cat_slave', signature: 'Meow~ 🐱' },
+  
+  // NEW ACG CHARACTERS
+  { id: '30', name: '鹿目圆香', avatar: 'https://loremflickr.com/200/200/anime,girl,pink?lock=30', phone: '13900000030', wxid: 'madoka_magica', signature: '不要放弃希望！✨' },
+  { id: '31', name: 'Asuka', avatar: 'https://loremflickr.com/200/200/anime,girl,red?lock=31', phone: '13900000031', wxid: 'asuka_langley', signature: '你是笨蛋吗？' },
+  { id: '32', name: 'Rei', avatar: 'https://loremflickr.com/200/200/anime,girl,blue?lock=32', phone: '13900000032', wxid: 'ayanami_00', signature: '...' },
 ];
 
 export const MOCK_MESSAGES: Message[] = [
@@ -291,6 +296,11 @@ export const MOCK_MESSAGES: Message[] = [
   // momo
   { id: 'm9', senderId: '5', receiverId: 'me', content: '尊嘟假嘟 O.o', type: 'text', timestamp: Date.now() - 60000, read: false },
   
+  // New Anime Characters
+  { id: 'm30', senderId: '30', receiverId: 'me', content: '早安！今天也要元气满满哦！(≧∇≦)/', type: 'text', timestamp: Date.now() - 5000, read: false },
+  { id: 'm31', senderId: '31', receiverId: 'me', content: '笨蛋！快点回消息啊！💢', type: 'text', timestamp: Date.now() - 15000, read: false },
+  { id: 'm32', senderId: '32', receiverId: 'me', content: '...', type: 'text', timestamp: Date.now() - 25000, read: false },
+
   // Filling up chat list for everyone else
   { id: 'm_agent', senderId: '4', receiverId: 'me', content: '哥，那套房子降价了！这周末来看吗？', type: 'text', timestamp: Date.now() - 400000, read: true },
   { id: 'm_file', senderId: 'me', receiverId: '6', content: '[File] project_backup.zip', type: 'text', timestamp: Date.now() - 800000, read: true },
@@ -348,6 +358,15 @@ export const MOCK_POSTS_INITIAL: Post[] = [
         { id: 'c_momo_1', userId: '13', userName: '小学同学', content: '哪家店？求避雷', timestamp: Date.now() - 11000000 }
     ],
     timestamp: Date.now() - 12000000
+  },
+  {
+    id: 'p30_1',
+    authorId: '30',
+    content: '魔法少女的茶会！🍰 今天也是充满希望的一天呢！✨ #Cosplay',
+    images: ['https://loremflickr.com/400/400/anime,cosplay?lock=30'],
+    likes: ['31', 'me'],
+    comments: [],
+    timestamp: Date.now() - 13000000
   },
   {
     id: 'p_sales_1',
