@@ -107,7 +107,9 @@ export const AddFriend = ({ onBack }: { onBack: () => void }) => {
 }
 
 export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, onBack: () => void, onNavigate: (v: ViewState) => void }) => {
-    const { friends, deleteFriend, currentUser, getUser, addFriend, t } = useStore();
+    const { friends, deleteFriend, currentUser, getUser, addFriend, t, language } = useStore();
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
     // Do NOT use getUser here for display because getUser returns remark as name.
     // We want access to the raw friend object to show nickname properly.
     const rawFriend = friends.find(f => f.id === userId);
@@ -129,8 +131,16 @@ export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, on
         onBack();
     }
 
+    const handleDelete = () => {
+        deleteFriend(displayUser.id);
+        setShowDeleteConfirm(false);
+        onBack();
+    };
+
+    const confirmText = language === 'zh' ? '删除联系人将清空聊天记录' : 'Delete contact and chat history?';
+
     return (
-        <div className="flex flex-col h-full bg-wechat-bg">
+        <div className="flex flex-col h-full bg-wechat-bg relative">
             <Header title="" onBack={onBack} rightAction={<IconMore />} />
             <ScrollArea>
                 <div className="bg-white p-5 flex items-start mb-2">
@@ -200,14 +210,38 @@ export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, on
                     
                     {isFriend && !isMe && (
                          <button 
-                             onClick={() => { if(confirm("Delete this friend?")) { deleteFriend(displayUser.id); onBack(); } }}
+                             onClick={() => setShowDeleteConfirm(true)}
                              className="w-full bg-white text-red-500 font-bold py-3.5 rounded-lg border border-gray-200 active:bg-gray-50"
                         >
-                            Delete
+                            {t('delete')}
                         </button>
                     )}
                 </div>
             </ScrollArea>
+
+            {/* Delete Confirmation Action Sheet */}
+            {showDeleteConfirm && (
+                <div className="absolute inset-0 z-50 bg-black/50 flex flex-col justify-end" onClick={() => setShowDeleteConfirm(false)}>
+                    <div className="bg-[#EDEDED] rounded-t-xl overflow-hidden pb-safe" onClick={e => e.stopPropagation()}>
+                        <div className="py-4 text-center text-xs text-gray-500 border-b border-gray-200 px-8">
+                            {confirmText}
+                        </div>
+                        <button 
+                            onClick={handleDelete}
+                            className="w-full bg-white py-3.5 text-red-500 text-lg font-medium active:bg-gray-50 border-b border-gray-200"
+                        >
+                            {t('delete')}
+                        </button>
+                        <div className="h-2 bg-[#EDEDED]"></div>
+                        <button 
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="w-full bg-white py-3.5 text-black text-lg font-medium active:bg-gray-50"
+                        >
+                            {t('cancel')}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

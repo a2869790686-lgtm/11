@@ -1,5 +1,4 @@
 
-
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
@@ -250,6 +249,16 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     setMessages(prev => prev.filter(msg => 
         msg.senderId !== id && msg.receiverId !== id
     ));
+
+    // 3. Remove their posts from feed
+    setPosts(prev => prev.filter(p => p.authorId !== id));
+
+    // 4. Remove their likes/comments from existing posts
+    setPosts(prev => prev.map(p => ({
+        ...p,
+        likes: p.likes.filter(uid => uid !== id),
+        comments: p.comments.filter(c => c.userId !== id)
+    })));
   }, []);
 
   const updateFriendRemark = useCallback((id: string, remark: string) => {

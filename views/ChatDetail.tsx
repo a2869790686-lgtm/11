@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
@@ -15,122 +14,114 @@ interface ChatDetailProps {
 
 const EMOJIS = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😙", "😚", "🙂", "🤗", "🤔", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "🤑", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰", "😱", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "😇", "🤠", "🤠", "🤡", "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "👿", "👹", "👺", "💀", "👻", "👽", "🤖", "💩", "🙏", "👍", "👎", "👊", "👌", "💪", "👏", "🙌", "👐", "👋", "💋", "💘", "❤️", "💓", "💔", "💕", "💖", "💗", "💙", "💚", "💛", "💜", "🖤", "💝", "💞", "💟"];
 
-// List of IDs that should speak English
-const FOREIGN_IDS = ['10', '16', '18', '19'];
+// --- ADVANCED AI ENGINE (SIMULATED) ---
 
-// --- PERSONA INTELLIGENCE LOGIC ---
-const getPersonaReply = (userId: string, userMessage: string): string => {
-    const msg = userMessage.toLowerCase();
-    const isForeign = FOREIGN_IDS.includes(userId);
+type Intent = 'GREETING' | 'QUESTION' | 'AFFECTION' | 'COMPLAINT' | 'MONEY' | 'FOOD' | 'WORK' | 'ACG' | 'WEATHER' | 'STOCK' | 'NEWS' | 'JOKE' | 'UNKNOWN';
 
-    // 1. Mom (id: 2)
-    if (userId === '2') {
-        if (msg.includes('吃') || msg.includes('饭') || msg.includes('饿')) return "记得多吃点青菜！别老吃外卖🥦。对身体不好！😰";
-        if (msg.includes('冷') || msg.includes('天') || msg.includes('雨')) return "穿秋裤了吗？别冻着！🧣 注意保暖啊！☕️";
-        if (msg.includes('晚') || msg.includes('睡') || msg.includes('累')) return "早点睡！熬夜伤肝😴。听妈妈话！❤️";
-        if (msg.includes('钱')) return "钱够不够花？不够妈给你转💸。别苦了自己！";
-        if (msg.includes('爱')) return "妈妈也爱你，照顾好自己❤️。🌹";
-        return "什么时候回家？妈给你包饺子🥟。想你了！🥺";
-    }
+// 1. Simulated Network Knowledge Base
+const MOCK_NETWORK_DATA = {
+    WEATHER: ["今天晴转多云，25°C，适合出门走走。", "外面下雨了，出门记得带伞哦 ☔️", "今天气温骤降，注意保暖！❄️", "风和日丽，是个好天气。☀️"],
+    STOCK: ["大盘今天跌惨了... 📉", "茅台又涨了！🚀", "科技股全线飘红，牛市来了？", "别提了，我的基金已经亏了20%了... 😭"],
+    NEWS: ["震惊！某知名科技公司发布了颠覆性AI产品！", "最新消息：下周一开始油价下调。", "本地新闻：地铁10号线即将开通。", "娱乐圈大瓜：某顶流塌房了！🍉"],
+    JOKE: ["有一天，0对8说：胖就胖呗，还系什么腰带。", "程序员最讨厌的地方是哪里？酒吧，因为里面有太多Foo和Bar。", "为什么企鹅只有肚子是白的？因为手短洗不到后背。"],
+    FACT: ["你知道吗？章鱼有三颗心脏。", "冷知识：猪无法抬头看天空。", "人体最强壮的肌肉是舌头。"]
+};
 
-    // 2. Boss (id: 3)
-    if (userId === '3') {
-        if (msg.includes('好') || msg.includes('完') || msg.includes('报告')) return "发我邮箱📧，我开会前要看。辛苦了👍";
-        if (msg.includes('假') || msg.includes('病') || msg.includes('休')) return "这周项目关键期，能不能克服一下？🤔 加油！💪";
-        if (msg.includes('方案') || msg.includes('建议')) return "周一例会细聊📅。";
-        if (msg.includes('抱歉') || msg.includes('错')) return "下不为例，注意细节⚠️。";
-        return "收到，抓紧落实KPI📈。加油干！🚀";
-    }
-
-    // 3. Wife (id: 8)
-    if (userId === '8') {
-        if (msg.includes('爱') || msg.includes('想')) return "我也爱你老公！么么哒！❤️😘💋";
-        if (msg.includes('吃') || msg.includes('饭')) return "我想吃火锅！或者日料？🍣🍱 你决定嘛~ 😉";
-        if (msg.includes('家') || msg.includes('回')) return "回来路上带杯奶茶！🧋 还有鸭脖！🍖";
-        if (msg.includes('买')) return "那个包包打折了，能不能买嘛！🥺🛍️ 拜托拜托~ 🙏";
-        return "几点回来？想你了🥺。等你哦！🏠❤️";
-    }
-
-    // 4. Momo (id: 5)
-    if (userId === '5') {
-        if (msg.includes('哈哈') || msg.includes('笑')) return "xswl (笑死我了) 😂😂😂 绝了！🤙";
-        if (msg.includes('难过') || msg.includes('哭')) return "emo了... 🌧️ 抱抱~ 🫂";
-        if (msg.includes('?')) return "尊嘟假嘟 O.o 🤨";
-        return "yyds! 🙌 666!";
-    }
-
-    // 5. Real Estate Agent (id: 4)
-    if (userId === '4') {
-        return "Leo哥，市场回暖了！🔥 现在不买又要涨了！📈 这套房型绝佳，带您看看？🏠 随时恭候！🤝";
-    }
-
-    // 6. Colleague Jack (id: 10) - English Speaker (Programmer)
-    if (userId === '10') {
-        if (msg.includes('bug') || msg.includes('error')) return "Have you checked the logs? 🐛 It works on my machine. 🤷‍♂️";
-        if (msg.includes('coffee')) return "Let's go! I need caffeine. ☕️🚀";
-        if (msg.includes('merge')) return "LGTM. Merging now. ✅👍";
-        return "Still coding... this deadline is killing me. 💻💀";
-    }
-
-    // 7. HR Sara (id: 19) - English Speaker
-    if (userId === '19') {
-        if (msg.includes('job') || msg.includes('offer')) return "We have a great position opening up. Are you interested? 🌟";
-        return "Let's touch base next week. 🗓️ Have a nice weekend! ☀️";
-    }
+const analyzeIntent = (text: string): Intent => {
+    const t = text.toLowerCase();
+    // Network / Knowledge Queries
+    if (t.includes('天气') || t.includes('weather') || t.includes('下雨') || t.includes('温度')) return 'WEATHER';
+    if (t.includes('股票') || t.includes('基金') || t.includes('stock') || t.includes('大盘') || t.includes('涨') || t.includes('跌')) return 'STOCK';
+    if (t.includes('新闻') || t.includes('news') || t.includes('发生什么') || t.includes('瓜')) return 'NEWS';
+    if (t.includes('笑话') || t.includes('joke') || t.includes('讲个') || t.includes('funny')) return 'JOKE';
     
-    // --- NEW ANIME CHARACTERS ---
+    // Emotional / Context Queries
+    if (t.includes('你好') || t.includes('hello') || t.includes('hi') || t.includes('zao') || t.includes('早') || t.includes('hey')) return 'GREETING';
+    if (t.includes('?') || t.includes('？') || t.includes('什么') || t.includes('what') || t.includes('吗') || t.includes('how')) return 'QUESTION';
+    if (t.includes('爱') || t.includes('love') || t.includes('喜欢') || t.includes('miss') || t.includes('想你') || t.includes('like')) return 'AFFECTION';
+    if (t.includes('钱') || t.includes('money') || t.includes('转账') || t.includes('pay') || t.includes('贵') || t.includes('buy')) return 'MONEY';
+    if (t.includes('累') || t.includes('烦') || t.includes('难过') || t.includes('tired') || t.includes('sad') || t.includes('emo') || t.includes('cry')) return 'COMPLAINT';
+    if (t.includes('吃') || t.includes('饭') || t.includes('food') || t.includes('饿') || t.includes('drink') || t.includes('tea')) return 'FOOD';
+    if (t.includes('加班') || t.includes('工作') || t.includes('work') || t.includes('job') || t.includes('meeting') || t.includes('busy')) return 'WORK';
+    if (t.includes('二次元') || t.includes('动漫') || t.includes('anime') || t.includes('game') || t.includes('cosplay')) return 'ACG';
     
-    // Madoka (30) - Genki/Optimistic
-    if (userId === '30') {
-        if (msg.includes('难过') || msg.includes('累')) return "不要放弃希望！✨ 我会一直陪着你的！💕 (≧∇≦)/";
-        if (msg.includes('你好')) return "早安！今天也要元气满满哦！💖 嘿嘿~";
-        if (msg.includes('吃')) return "甜点是装在另一个肚子里的！🍰 走吧走吧！";
-        return "只要相信，奇迹就会发生！✨✨✨";
+    return 'UNKNOWN';
+};
+
+// 2. Persona Definition
+interface PersonaResponse extends Record<Intent, string[]> {}
+
+const DEFAULT_RESPONSES: PersonaResponse = {
+    WEATHER: MOCK_NETWORK_DATA.WEATHER,
+    STOCK: MOCK_NETWORK_DATA.STOCK,
+    NEWS: MOCK_NETWORK_DATA.NEWS,
+    JOKE: MOCK_NETWORK_DATA.JOKE,
+    GREETING: ["你好呀！👋", "在呢，咋啦？", "嗨~ 😄", "好久不见！"],
+    QUESTION: ["这个问题我也在想... 🤔", "你猜？😜", "我也不是很清楚哎。", "这个嘛..."],
+    AFFECTION: ["谢谢你！❤️", "比心 💕", "我也很开心。", "嘿嘿 😊"],
+    COMPLAINT: ["摸摸头，都会过去的。🫂", "抱抱~", "别太往心里去。", "心疼你 🥺"],
+    MONEY: ["谈钱伤感情嘛~ 😂", "收到收到！💰", "哈哈，老板大气！👍"],
+    FOOD: ["听起来很好吃！🤤", "我也饿了...", "下次一起去吃！🥘", "深夜放毒？"],
+    WORK: ["加油打工人！💪", "注意休息哦。", "别太拼了。", "摸鱼快乐 🐟"],
+    ACG: ["这个我不太懂哎。", "好像很有趣的样子。", "哈哈。", "确实。"],
+    UNKNOWN: ["嗯嗯。", "确实。", "哈哈，是吗？", "然后呢？", "[表情包]", "了解。"]
+};
+
+// Character Specific Overrides
+const PERSONA_DB: Record<string, Partial<PersonaResponse>> = {
+    '2': { // Mom
+        WEATHER: ["不管天气咋样，多穿点总没错！🧣", "天气预报说要下雨，别乱跑。", "记得带伞！"],
+        STOCK: ["别炒股了，踏踏实实存钱！🏦", "隔壁王阿姨也亏了，你赶紧退出来吧。", "我不懂这些，你小心被骗。"],
+        GREETING: ["儿砸，吃饭了吗？🥣", "在忙吗？", "妈妈想你了。❤️"],
+        QUESTION: ["问你爸去。👴", "妈也不懂这些，你这孩子。", "什么时候带女朋友回来？💑"],
+        AFFECTION: ["妈也爱你，多穿点衣服。", "傻孩子。", "家里永远是你的港湾。🏠"],
+        COMPLAINT: ["哎哟，别太累着自己。", "多喝热水。☕", "实在不行就回家，妈养你。"],
+        MONEY: ["钱够不够花？妈给你转。💸", "省着点花，别老点外卖。"],
+        FOOD: ["别老吃垃圾食品！🚫", "记得吃早饭！", "妈给你包了饺子。🥟"]
+    },
+    '3': { // Boss
+        WEATHER: ["不管刮风下雨，别迟到就行。", "天气不错，适合跑业务。"],
+        STOCK: ["心思放在工作上，别老看盘。", "大环境不好，更要努力工作。📉"],
+        WORK: ["这个PPT还要改。", "周一例会汇报一下。📅", "客户那边怎么说？", "进度如何？"],
+        COMPLAINT: ["克服一下困难。", "年轻人要多吃苦。", "不要带情绪工作。🚫"],
+        UNKNOWN: ["抓紧落实。", "以结果为导向。", "收到。"]
+    },
+    '8': { // Wife
+        WEATHER: ["下雨了，你来接我好不好？🥺", "今天天气真好，周末去野餐吧！🥪"],
+        STOCK: ["赚了钱记得给我买包包！👜", "亏了？今晚别想上床睡觉！😡"],
+        GREETING: ["老公~ ❤️", "亲爱的在干嘛？", "想你了嘛~ 😘"],
+        AFFECTION: ["爱你爱你！么么哒！💋", "老公最好了！", "比心心 ❤️"],
+        COMPLAINT: ["抱抱老公~ 🫂", "谁欺负你了？我帮你骂他！😡", "回来给你做好吃的。🍲"],
+        MONEY: ["老公大气！买包包！👜", "谢谢老公~", "发工资啦？🤑"],
+        FOOD: ["我想吃火锅！🍲", "晚上吃什么呀？", "我要喝奶茶！🧋"]
+    },
+    '10': { // Jack (Programmer)
+        WEATHER: ["I don't go outside. 🏠", "Is it raining? My cloud server is fine."],
+        STOCK: ["Crypto is the future. 🚀", "HODL!", "Tech stocks are dipping."],
+        WORK: ["Still debugging... 🐛", "Merging PR now.", "Deploying to prod. 🚀", "Coffee first. ☕"],
+        UNKNOWN: ["LGTM.", "Cool.", "Code looks good.", "Talk later, busy coding."]
+    },
+    '30': { // Madoka (Anime)
+        WEATHER: ["即使下雨，心也要是晴天哦！☀️", "这种天气最适合喝茶吃蛋糕了！🍰"],
+        GREETING: ["早安！今天也要加油哦！✨", "你好呀！(≧∇≦)/", "充满希望的一天！"],
+        COMPLAINT: ["不要难过... 我会一直陪着你的。", "把悲伤都变成希望吧！", "抱抱~ (｡･ω･｡)ﾉ♡"],
+        UNKNOWN: ["为了守护大家！🏹", "奇迹与魔法都是存在的！", "嗯！一起加油！"]
     }
+};
+
+const getSmartReply = (userId: string, userMessage: string): string => {
+    const intent = analyzeIntent(userMessage);
+    const persona = PERSONA_DB[userId];
     
-    // Asuka (31) - Tsundere
-    if (userId === '31') {
-        if (msg.includes('你好')) return "哈？这种时候打招呼？你是笨蛋吗？💢";
-        if (msg.includes('喜欢') || msg.includes('爱')) return "谁...谁稀罕你的喜欢啊！笨蛋！///// (扭头)";
-        if (msg.includes('帮')) return "真拿你没办法... 这次就勉为其难帮你一下好了！😤 感谢我吧！";
-        return "无路赛无路赛！你很烦耶！🔥";
-    }
-    
-    // Rei (32) - Kuudere/Silent
-    if (userId === '32') {
-        if (msg.includes('你好')) return "...你好。";
-        if (msg.includes('在干嘛') || msg.includes('忙')) return "待机中。";
-        if (msg.includes('笑')) return "对不起，这种时候我不知道该用什么表情。";
-        return "...命令是什么？";
+    // 1. Check Persona specific intent
+    if (persona && persona[intent] && persona[intent]!.length > 0) {
+        const options = persona[intent]!;
+        return options[Math.floor(Math.random() * options.length)];
     }
 
-    // General Logic based on Language
-    if (isForeign) {
-        if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) return "Hey! Long time no see. 👋😁";
-        if (msg.includes('how are you') || msg.includes('doing')) return "I'm good, just busy with stuff. You? 😎";
-        if (msg.includes('?')) return "That's a good question... 🤔 let me think.";
-        if (msg.includes('payment') || msg.includes('money')) return "Payment received, thanks! 💸🙏";
-        if (msg.includes('ok') || msg.includes('good')) return "Awesome! 👍✨";
-        return "Got it. 👌";
-    } else {
-        if (msg.includes('你好') || msg.includes('在吗')) return "在的，好久不见！👋😄";
-        if (msg.includes('怎么样') || msg.includes('最近')) return "挺好的，瞎忙呗。你呢？😸";
-        if (msg.includes('?')) return "这个问题... 🤔 我得想想";
-        if (msg.includes('钱') || msg.includes('转账')) return "收到啦，谢谢老板！💸🤩 老板大气！";
-        if (msg.includes('好') || msg.includes('恩')) return "OK! 👍✅";
-        
-        const randomChineseReplies = [
-            "真的吗？😲",
-            "哈哈，有意思 😂",
-            "这周末有空出来聚聚？🍻",
-            "我现在有点忙，回聊 👋",
-            "确实。🤔",
-            "笑死我了 🤣",
-            "厉害了！👍",
-            "[表情包] 🤪"
-        ];
-        return randomChineseReplies[Math.floor(Math.random() * randomChineseReplies.length)];
-    }
+    // 2. Fallback to Default Knowledge Base / Intent
+    const defaultOptions = DEFAULT_RESPONSES[intent] || DEFAULT_RESPONSES['UNKNOWN'];
+    return defaultOptions[Math.floor(Math.random() * defaultOptions.length)];
 };
 
 
@@ -140,8 +131,19 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
   const [isAudioMode, setIsAudioMode] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
+  
+  // Typing Indicator State
+  const [isTyping, setIsTyping] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Track the last message ID we initiated a reply for to prevent double-processing
+  const lastProcessedMsgId = useRef<string | null>(null);
+  
+  // Track timers so we can clear them ONLY when switching chats or unmounting
+  // NOT when the history updates (like read receipt updates)
+  const activeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   
   // Identify the target entity
   const targetName = chatType === 'group' 
@@ -160,7 +162,18 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [history, showEmoji, showPlusMenu]);
+  }, [history, showEmoji, showPlusMenu, isTyping]); 
+
+  // --- CLEANUP EFFECT ---
+  // Only runs when 'id' changes (switching chats) or component unmounts
+  useEffect(() => {
+    return () => {
+        activeTimers.current.forEach(clearTimeout);
+        activeTimers.current = [];
+        lastProcessedMsgId.current = null;
+        setIsTyping(false);
+    };
+  }, [id]);
 
   // --- SMART AUTO-REPLY LOGIC ---
   useEffect(() => {
@@ -171,77 +184,67 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
            // If the last message is sent by ME (Current User)
            if (lastMsg.senderId === currentUser.id) {
                
-               // 1. Handle MONEY TRANSFER Logic
+               // 1. Prevent duplicate processing of the exact same message ID
+               if (lastProcessedMsgId.current === lastMsg.id) return;
+               
+               // 2. Prevent replying to old messages (e.g. when revisiting a chat)
+               // Only reply if message was sent in the last 60 seconds
+               const timeDiff = Date.now() - lastMsg.timestamp;
+               if (timeDiff > 60000) return;
+
+               // Logic for Money/RedPacket remains same...
                if (lastMsg.type === 'transfer' && lastMsg.status !== 'accepted') {
-                    const msgId = lastMsg.id;
-                    const randomDelay = Math.random() * 3000 + 2000; // 2-5s delay
-                    const isForeign = FOREIGN_IDS.includes(id);
-
-                    const timeout = setTimeout(() => {
-                        updateMessage(msgId, { status: 'accepted' });
-                        // Add system message
-                        addMessage({
-                            id: `sys_tf_${Date.now()}`,
-                            senderId: id,
-                            receiverId: currentUser.id,
-                            content: isForeign ? `Friend accepted transfer.` : `对方已收款`,
-                            type: 'system',
-                            timestamp: Date.now(),
-                            read: true
-                        });
-                        // Add gratitude text
-                        addMessage({
-                            id: `rep_tf_${Date.now()}`,
-                            senderId: id,
-                            receiverId: currentUser.id,
-                            content: isForeign ? "Received! You are the best! 💸❤️" : "收到啦！老板大气！💸❤️ 谢谢！🙏",
-                            type: 'text',
-                            timestamp: Date.now() + 100,
-                            read: false
-                        });
-                    }, randomDelay);
-                    return () => clearTimeout(timeout);
+                   lastProcessedMsgId.current = lastMsg.id;
+                   const t = setTimeout(() => {
+                       updateMessage(lastMsg.id, { status: 'accepted' });
+                       addMessage({ id: `sys_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: `对方已收款`, type: 'system', timestamp: Date.now(), read: true });
+                   }, 2000);
+                   activeTimers.current.push(t);
+                   return;
                }
 
-               // 2. Handle RED PACKET Logic
-               if (lastMsg.type === 'red_packet') {
-                   const randomDelay = Math.random() * 3000 + 2000;
-                   const isForeign = FOREIGN_IDS.includes(id);
-                   const timeout = setTimeout(() => {
-                       addMessage({
-                           id: `rep_rp_${Date.now()}`,
-                           senderId: id,
-                           receiverId: currentUser.id,
-                           content: isForeign ? "Wow! Boss is so generous! Best wishes! 🧧✨" : "哇！老板大气！恭喜发财！🧧✨ 谢谢老板！🥰",
-                           type: 'text',
-                           timestamp: Date.now(),
-                           read: false
-                       });
-                   }, randomDelay);
-                   return () => clearTimeout(timeout);
-               }
+               // 3. Handle NORMAL TEXT CHAT Logic (Smart Engine)
+               if (lastMsg.type === 'text' || lastMsg.type === 'audio') {
+                   // Mark as processed immediately
+                   lastProcessedMsgId.current = lastMsg.id;
 
-               // 3. Handle NORMAL TEXT CHAT Logic (Persona AI)
-               if (lastMsg.type === 'text') {
-                   // Simulate "typing" delay
-                   const randomDelay = Math.random() * 2000 + 1000; // 1-3s delay
+                   // 1. Determine "Think Time" (Network simulation)
+                   const thinkTime = Math.random() * 1000 + 500; // 0.5 - 1.5s
                    
-                   const timeout = setTimeout(() => {
-                       const replyContent = getPersonaReply(id, lastMsg.content);
-                       addMessage({
-                           id: `rep_txt_${Date.now()}`,
-                           senderId: id,
-                           receiverId: currentUser.id,
-                           content: replyContent,
-                           type: 'text',
-                           timestamp: Date.now(),
-                           read: false
-                       });
-                   }, randomDelay);
-                   return () => clearTimeout(timeout);
+                   const t1 = setTimeout(() => {
+                       setIsTyping(true); // START TYPING
+                       
+                       // 2. Determine Reply Content
+                       const replyContent = getSmartReply(id, lastMsg.content);
+                       
+                       // 3. Determine "Typing Time" based on length of reply
+                       const typingTime = Math.min(3000, Math.max(1000, replyContent.length * 200));
+
+                       const t2 = setTimeout(() => {
+                           setIsTyping(false); // STOP TYPING
+                           addMessage({
+                               id: `rep_txt_${Date.now()}`,
+                               senderId: id,
+                               receiverId: currentUser.id,
+                               content: replyContent,
+                               type: 'text',
+                               timestamp: Date.now(),
+                               read: false
+                           });
+                       }, typingTime);
+                       activeTimers.current.push(t2);
+
+                   }, thinkTime);
+                   activeTimers.current.push(t1);
                }
+           } else {
+             // If last message is NOT from me (i.e., it's a reply), ensure typing indicator is off
+             setIsTyping(false);
            }
       }
+      // Note: We deliberately do NOT include a cleanup function here that clears timers
+      // because 'history' updates (like read receipt) shouldn't cancel the ongoing reply logic.
+      // Cleanup is handled by the [id] effect above.
   }, [history, chatType, currentUser.id, id, addMessage, updateMessage]);
 
   const handleSend = () => {
@@ -338,7 +341,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
   return (
     <div className="flex flex-col h-full bg-wechat-bg">
       <Header 
-        title={targetName} 
+        title={targetName + (isTyping ? ' (Typing...)' : '')} 
         onBack={onBack} 
         rightAction={<div onClick={() => onNavigate({ type: 'CHAT_INFO', id, chatType })} className="cursor-pointer p-2"><IconMore /></div>} 
       />
@@ -361,7 +364,6 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
               )}
               
               <div className={`max-w-[75%] relative flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                {/* Show Sender Name in Group Chat if not Me */}
                 {chatType === 'group' && !isMe && (
                     <span className="text-xs text-gray-400 mb-1 ml-1">{sender?.name}</span>
                 )}
@@ -378,6 +380,21 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
             </div>
           );
         })}
+
+        {/* Typing Bubble */}
+        {isTyping && (
+             <div className="flex justify-start items-start mb-4 animate-pulse">
+                <img 
+                    src={getUser(id)?.avatar} 
+                    className="w-10 h-10 rounded-md mr-2 bg-gray-300"
+                />
+                <div className="bg-white text-gray-400 px-3 py-2 rounded-md rounded-tl-none shadow-sm flex items-center space-x-1 h-10">
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+             </div>
+        )}
       </div>
 
       <div className="bg-[#F7F7F7] border-t border-[#E5E5E5] shrink-0 pb-[env(safe-area-inset-bottom)]">
@@ -407,20 +424,18 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
             )}
         </div>
 
-        {/* Emoji Panel */}
         {showEmoji && (
             <div className="h-[250px] bg-[#EDEDED] border-t border-[#DCDCDC] overflow-y-auto grid grid-cols-8 gap-2 p-4">
                 {EMOJIS.map((e, i) => <button key={i} onClick={() => setInputText(p => p+e)} className="text-2xl hover:bg-white rounded">{e}</button>)}
             </div>
         )}
 
-        {/* Plus Menu Panel */}
         {showPlusMenu && (
              <div className="h-[250px] bg-[#EDEDED] border-t border-[#DCDCDC] p-6">
                  <div className="grid grid-cols-4 gap-6">
                      <div onClick={() => onNavigate({ type: 'MONEY_RED_PACKET', userId: id })} className="flex flex-col items-center gap-2 cursor-pointer">
                          <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-50"><IconRedPacket /></div>
-                         <span className="text-xs text-gray-500">Red Packet</span>
+                         <span className="text-xs text-gray-500">{t('red_packet') || 'Red Packet'}</span>
                      </div>
                      <div onClick={() => onNavigate({ type: 'MONEY_TRANSFER', userId: id })} className="flex flex-col items-center gap-2 cursor-pointer">
                          <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-50"><IconTransfer /></div>
