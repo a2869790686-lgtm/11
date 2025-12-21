@@ -121,7 +121,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     setPosts(prev => [newPost, ...prev]);
   }, [currentUser.id]);
 
-  // --- REFRESH MOMENTS VIA GEMINI AI + GOOGLE SEARCH ---
+  // --- ENHANCED REFRESH MOMENTS (Varied Length & Fast Images) ---
   const refreshMoments = useCallback(async () => {
     try {
       if (friends.length === 0) return;
@@ -129,23 +129,26 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       const author = friends[Math.floor(Math.random() * friends.length)];
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
+      const moodTemplates = [
+        "闲来无事发牢骚", "简短有力的状态", "深度长篇感悟", "结合新闻热点点赞/吐槽", "日常生活打卡", "深夜网抑云情绪"
+      ];
+      const selectedMood = moodTemplates[Math.floor(Math.random() * moodTemplates.length)];
+
       const prompt = `
-        你现在是微信好友 "${author.name}"，你的微信号是 ${author.wxid}。
-        你的个性签名是: "${author.signature}"。
+        你现在是微信好友 "${author.name}"，签名是: "${author.signature}"。
         
         任务: 
-        1. 使用 Google Search 搜索一个与你身份高度相关的今日热点、新闻、天气、或生活动态。
-           - 如果你是生意人，搜索经济或行业新闻。
-           - 如果你是学生/年轻人，搜索娱乐、游戏或校园话题。
-           - 如果你是长辈，搜索健康或天气。
-        2. 以你的语气写一条微信朋友圈动态 (中文)。
-        3. 语气要极其真实，像真人发的。
-        4. 提供 1-2 个描述图片的关键词 (英文)，用于生成相关配图。
+        1. 使用 Google Search 获取一个今日热点。
+        2. 根据心情模板 "${selectedMood}" 写一条朋友圈动态。
+        3. 字数要求：有的动态极短（3-10字），有的中等（20-50字），有的较长（100字以上）。请随机分配。
+        4. 必须包含符合 "${author.name}" 身份的口头禅或语气。
+        5. 图片数量建议：随机返回 0, 1, 3, 6 或 9。
         
-        请仅返回 JSON 格式:
+        请仅返回 JSON:
         {
-          "content": "动态文字内容...",
-          "imgKeywords": "comma,separated,keywords"
+          "content": "文字内容...",
+          "imgKeywords": "单个英文关键词(用于搜索图片)",
+          "imgCount": 数字
         }
       `;
 
@@ -159,9 +162,10 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
             type: Type.OBJECT,
             properties: {
               content: { type: Type.STRING },
-              imgKeywords: { type: Type.STRING }
+              imgKeywords: { type: Type.STRING },
+              imgCount: { type: Type.INTEGER }
             },
-            required: ["content", "imgKeywords"]
+            required: ["content", "imgKeywords", "imgCount"]
           }
         }
       });
@@ -169,12 +173,19 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       const result = JSON.parse(response.text || "{}");
       
       if (result.content) {
-        const keywords = result.imgKeywords || "lifestyle";
+        const keyword = (result.imgKeywords || "lifestyle").split(',')[0].trim();
+        const count = Math.min(9, Math.max(0, result.imgCount || 0));
+        
+        // Use a faster source: source.unsplash.com or simply more optimized lorempicsum keywords
+        const images = count > 0 
+          ? Array.from({ length: count }).map((_, i) => `https://loremflickr.com/400/400/${keyword}?lock=${Date.now() + i}`)
+          : [];
+
         const newPost: Post = {
             id: `p_gen_${Date.now()}`,
             authorId: author.id,
             content: result.content,
-            images: [`https://loremflickr.com/500/500/${keywords.split(',')[0].trim()}?lock=${Date.now()}`],
+            images: images,
             likes: [],
             comments: [],
             timestamp: Date.now()
@@ -183,17 +194,6 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       }
     } catch (error) {
       console.error("AI Refresh Error:", error);
-      // Fallback post
-      const fallbackPost: Post = {
-          id: `p_fail_${Date.now()}`,
-          authorId: friends[0].id,
-          content: "今天天气不错，出来散散步。🍃",
-          images: [`https://loremflickr.com/500/500/nature?lock=${Date.now()}`],
-          likes: [],
-          comments: [],
-          timestamp: Date.now()
-      };
-      setPosts(prev => [fallbackPost, ...prev]);
     }
   }, [friends]);
 
