@@ -53,7 +53,7 @@ export const ContactList = ({ onNavigate }: ContactListProps) => {
         </div>
 
         {/* Contact List */}
-        <div className="bg-gray-100 px-4 py-1 text-xs text-gray-500">A</div>
+        <div className="bg-gray-100 px-4 py-1 text-xs text-gray-500">好友列表</div>
         {sortedFriends.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No friends yet</div>
         ) : (
@@ -107,29 +107,17 @@ export const AddFriend = ({ onBack }: { onBack: () => void }) => {
 }
 
 export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, onBack: () => void, onNavigate: (v: ViewState) => void }) => {
-    const { friends, deleteFriend, currentUser, getUser, addFriend, t, language } = useStore();
+    const { friends, deleteFriend, currentUser, getUser, t, language } = useStore();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    // Do NOT use getUser here for display because getUser returns remark as name.
-    // We want access to the raw friend object to show nickname properly.
-    const rawFriend = friends.find(f => f.id === userId);
-    const user = getUser(userId); // Fallback for strangers
-    
-    // Use rawFriend if available (is a friend), otherwise user (stranger)
-    const displayUser = rawFriend || user;
+    const friend = friends.find(f => f.id === userId);
+    const user = getUser(userId);
+    const displayUser = friend || user;
 
-    if (!displayUser) return <div>User not found</div>;
+    if (!displayUser) return <div className="p-10 text-center">User not found</div>;
 
-    const isFriend = !!rawFriend;
+    const isFriend = !!friend;
     const isMe = userId === currentUser.id;
-
-    const handleAdd = () => {
-        // Mock add friend logic by ID/Phone (assuming user object has phone or we just direct add)
-        addFriend(displayUser.phone || displayUser.id); // Simple mock
-        // Force refresh or just navigate back
-        alert("Friend Request Sent!");
-        onBack();
-    }
 
     const handleDelete = () => {
         deleteFriend(displayUser.id);
@@ -147,15 +135,13 @@ export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, on
                     <img src={displayUser.avatar} className="w-16 h-16 rounded-lg mr-4 bg-gray-200" />
                     <div>
                         <h2 className="text-xl font-bold mb-1 flex items-center">
-                            {rawFriend?.remark || displayUser.name}
-                            {!isFriend && !isMe && <span className="ml-2 text-xs bg-gray-200 px-1 rounded text-gray-500">Stranger</span>}
+                            {friend?.remark || displayUser.name}
                         </h2>
-                        {rawFriend?.remark && (
-                             <p className="text-gray-500 text-sm mb-0.5">{t('name')}: {rawFriend.name}</p>
+                        {friend?.remark && (
+                             <p className="text-gray-500 text-sm mb-0.5">{t('name')}: {friend.name}</p>
                         )}
                         <p className="text-gray-500 text-sm mb-0.5">{t('wechat_id')}: {displayUser.wxid}</p>
                         <p className="text-gray-500 text-sm mb-0.5">Region: China</p>
-                        {/* Signature Display */}
                         {displayUser.signature && (
                             <p className="text-gray-400 text-sm mt-1 italic">"{displayUser.signature}"</p>
                         )}
@@ -177,7 +163,13 @@ export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, on
                  <div className="bg-white mb-2">
                      <div className="p-4 border-b border-gray-100 flex justify-between active:bg-gray-50 cursor-pointer" onClick={() => onNavigate({ type: 'USER_MOMENTS', userId: displayUser.id })}>
                         <span className="text-black text-base">{t('moments')}</span>
-                        <span className="text-gray-400">{'>'}</span>
+                        <div className="flex items-center">
+                             <div className="flex gap-1 mr-2">
+                                 <div className="w-8 h-8 bg-gray-100"></div>
+                                 <div className="w-8 h-8 bg-gray-100"></div>
+                             </div>
+                             <span className="text-gray-400">{'>'}</span>
+                        </div>
                      </div>
                      <div className="p-4 border-b border-gray-100 flex justify-between active:bg-gray-50">
                         <span className="text-black text-base">{t('more')}</span>
@@ -186,25 +178,18 @@ export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, on
                 </div>
 
                 <div className="px-4 py-2">
-                    {isFriend || isMe ? (
+                    {(isFriend || isMe) && (
                          <button 
                              onClick={() => onNavigate({ type: 'CHAT_DETAIL', id: displayUser.id, chatType: 'user' })}
                              className="w-full bg-white text-[#576B95] font-bold py-3.5 rounded-lg mb-3 border border-gray-200 active:bg-gray-50"
                          >
-                             Messages
-                         </button>
-                    ) : (
-                         <button 
-                             onClick={handleAdd}
-                             className="w-full bg-wechat-green text-white font-bold py-3.5 rounded-lg mb-3 active:opacity-90"
-                         >
-                             Add to Contacts
+                             发消息
                          </button>
                     )}
                     
                     {(isFriend || isMe) && (
                          <button className="w-full bg-white text-[#576B95] font-bold py-3.5 rounded-lg mb-3 border border-gray-200 active:bg-gray-50">
-                            Voice or Video Call
+                            音视频通话
                         </button>
                     )}
                     
