@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -6,11 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   define: {
-    // 关键：将 Vercel 的环境变量注入到浏览器的 process.env 对象中
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
+    // 强制将编译环境中的 API_KEY 注入到浏览器端的 process.env.API_KEY
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ""),
   },
   build: {
-    // 允许打包大型模块
     chunkSizeWarningLimit: 1000,
   }
 })
