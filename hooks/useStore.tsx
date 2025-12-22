@@ -1,8 +1,26 @@
 
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
 import { GoogleGenAI, Type } from "@google/genai";
+
+const LOCAL_MOMENTS_POOL = [
+  { text: "下班！明天又是元气满满（个鬼）的一天。", imgCount: 1 },
+  { text: "。 。 。", imgCount: 0 },
+  { text: "服了，真的服了。", imgCount: 0 },
+  { text: "好想喝奶茶啊啊啊啊啊啊", imgCount: 0 },
+  { text: "今日份的打工记录：心率平稳，只想辞职。", imgCount: 1 },
+  { text: "终于周五了！！！！！", imgCount: 0 },
+  { text: "想念老家的晚霞了。", imgCount: 2 },
+  { text: "尊嘟假嘟？O.o", imgCount: 0 },
+  { text: "早八，我恨。", imgCount: 1 },
+  { text: "有些事，看淡了也就那样吧", imgCount: 1 },
+  { text: "又是想去旅游的一天。", imgCount: 3 },
+  { text: "没救了，这个世界。", imgCount: 0 },
+  { text: "今天的云好漂亮！☁️", imgCount: 1 },
+  { text: "拼个饭，有无？", imgCount: 0 },
+  { text: "网速慢得想撞墙...", imgCount: 0 }
+];
 
 interface StoreContextType {
   currentUser: User;
@@ -24,6 +42,7 @@ interface StoreContextType {
   refreshMoments: () => Promise<void>;
   toggleLike: (postId: string) => void;
   addComment: (postId: string, content: string) => void;
+  markNotificationsAsRead: () => void;
   getChatHistory: (id: string, isGroup?: boolean) => Message[];
   getChatSessions: () => ChatSession[];
   getUser: (id: string) => User | undefined;
@@ -62,19 +81,107 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return saved ? JSON.parse(saved) : MOCK_POSTS_INITIAL;
   });
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    const saved = localStorage.getItem('wx_notifications');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Persist
+  const prefetchPool = useRef<{text: string, imgCount: number, authorId: string}[]>([]);
+  const isPrefetching = useRef(false);
+
   useEffect(() => localStorage.setItem('wx_current_user', JSON.stringify(currentUser)), [currentUser]);
   useEffect(() => localStorage.setItem('wx_language', language), [language]);
   useEffect(() => localStorage.setItem('wx_friends', JSON.stringify(friends)), [friends]);
   useEffect(() => localStorage.setItem('wx_groups', JSON.stringify(groups)), [groups]);
   useEffect(() => localStorage.setItem('wx_messages', JSON.stringify(messages)), [messages]);
   useEffect(() => localStorage.setItem('wx_posts', JSON.stringify(posts)), [posts]);
+  useEffect(() => localStorage.setItem('wx_notifications', JSON.stringify(notifications)), [notifications]);
+
+  useEffect(() => {
+    setTimeout(() => fillPrefetchPool(), 2000);
+  }, []);
+
+  const fillPrefetchPool = async () => {
+    if (isPrefetching.current || friends.length === 0) return;
+    isPrefetching.current = true;
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const prompt = `生成3条极其真实的中国版微信朋友圈动态。数组返回：[{"text":"...", "imgCount": 0-9}, ...]`;
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: { responseMimeType: "application/json" }
+      });
+      const results = JSON.parse(response.text || "[]");
+      if (Array.isArray(results)) {
+        results.forEach(res => {
+          prefetchPool.current.push({ ...res, authorId: friends[Math.floor(Math.random() * friends.length)].id });
+        });
+      }
+    } catch (e) {
+      console.warn("Prefetch Failed", e);
+    } finally {
+      isPrefetching.current = false;
+    }
+  };
+
+  const simulateFeedback = useCallback(async (postId: string, content: string) => {
+    const interactionCount = 3 + Math.floor(Math.random() * 5);
+    const availableFriends = [...friends].sort(() => Math.random() - 0.5);
+
+    for (let i = 0; i < interactionCount; i++) {
+      const friend = availableFriends[i];
+      if (!friend) break;
+      const delay = 2000 + Math.random() * 13000;
+      
+      setTimeout(async () => {
+        const isLike = Math.random() > 0.4;
+        if (isLike) {
+          setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: [...new Set([...p.likes, friend.id])] } : p));
+          setNotifications(prev => [{
+            id: `notif_${Date.now()}`,
+            type: 'like',
+            userId: friend.id,
+            userName: friend.remark || friend.name,
+            userAvatar: friend.avatar,
+            postId: postId,
+            timestamp: Date.now(),
+            read: false
+          }, ...prev]);
+        } else {
+          try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = `你是"${friend.name}"。你的朋友刚刚发了朋友圈："${content}"。请写一条极其真实且简短的微信评论。如果是长辈就发鼓励，如果是年轻人就发玩梗或吐槽。极短（10字以内）。`;
+            const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
+            const commentText = response.text?.trim() || "赞！";
+            const newComment: Comment = { id: `c_ai_${Date.now()}`, userId: friend.id, userName: friend.remark || friend.name, content: commentText, timestamp: Date.now() };
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
+            setNotifications(prev => [{
+              id: `notif_${Date.now()}`,
+              type: 'comment',
+              userId: friend.id,
+              userName: friend.remark || friend.name,
+              userAvatar: friend.avatar,
+              postId: postId,
+              content: commentText,
+              timestamp: Date.now(),
+              read: false
+            }, ...prev]);
+          } catch (e) {}
+        }
+      }, delay);
+    }
+  }, [friends]);
 
   const updateCurrentUser = (updates: Partial<User>) => setCurrentUser(prev => ({ ...prev, ...updates }));
-  const addMessage = (msg: Message) => setMessages(prev => [...prev, msg]);
-  const updateMessage = (id: string, updates: Partial<Message>) => setMessages(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+  
+  const addMessage = useCallback((msg: Message) => {
+    setMessages(prev => [...prev, msg]);
+  }, []);
+
+  const updateMessage = useCallback((id: string, updates: Partial<Message>) => {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+  }, []);
 
   const markAsRead = useCallback((targetId: string) => {
     setMessages(prev => prev.map(m => {
@@ -88,15 +195,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const addFriend = useCallback((phone: string) => {
     const exists = friends.find(f => f.phone === phone);
     if (exists) return false;
-
-    const newUser: User = {
-      id: `new_${Date.now()}`,
-      name: `用户 ${phone.slice(-4)}`,
-      avatar: `https://picsum.photos/seed/${phone}/200/200`,
-      phone: phone,
-      wxid: `wx_${phone}`
-    };
-    
+    const newUser: User = { id: `new_${Date.now()}`, name: `用户 ${phone.slice(-4)}`, avatar: `https://picsum.photos/seed/${phone}/200/200`, phone: phone, wxid: `wx_${phone}` };
     setFriends(prev => [...prev, newUser]);
     return true;
   }, [friends]);
@@ -109,92 +208,39 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const updateFriendRemark = (id: string, remark: string) => setFriends(prev => prev.map(f => f.id === id ? { ...f, remark } : f));
 
   const addPost = useCallback((content: string, images: string[]) => {
-    const newPost: Post = {
-      id: `p_${Date.now()}`,
-      authorId: currentUser.id,
-      content,
-      images,
-      likes: [],
-      comments: [],
-      timestamp: Date.now()
-    };
+    const newPostId = `p_${Date.now()}`;
+    const newPost: Post = { id: newPostId, authorId: currentUser.id, content, images, likes: [], comments: [], timestamp: Date.now() };
     setPosts(prev => [newPost, ...prev]);
-  }, [currentUser.id]);
+    simulateFeedback(newPostId, content);
+  }, [currentUser.id, simulateFeedback]);
 
-  // --- ENHANCED REFRESH MOMENTS (Varied Length & Fast Images) ---
   const refreshMoments = useCallback(async () => {
-    try {
-      if (friends.length === 0) return;
-      
-      const author = friends[Math.floor(Math.random() * friends.length)];
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
-      const moodTemplates = [
-        "闲来无事发牢骚", "简短有力的状态", "深度长篇感悟", "结合新闻热点点赞/吐槽", "日常生活打卡", "深夜网抑云情绪"
-      ];
-      const selectedMood = moodTemplates[Math.floor(Math.random() * moodTemplates.length)];
-
-      const prompt = `
-        你现在是微信好友 "${author.name}"，签名是: "${author.signature}"。
-        
-        任务: 
-        1. 使用 Google Search 获取一个今日热点。
-        2. 根据心情模板 "${selectedMood}" 写一条朋友圈动态。
-        3. 字数要求：有的动态极短（3-10字），有的中等（20-50字），有的较长（100字以上）。请随机分配。
-        4. 必须包含符合 "${author.name}" 身份的口头禅或语气。
-        5. 图片数量建议：随机返回 0, 1, 3, 6 或 9。
-        
-        请仅返回 JSON:
-        {
-          "content": "文字内容...",
-          "imgKeywords": "单个英文关键词(用于搜索图片)",
-          "imgCount": 数字
-        }
-      `;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              content: { type: Type.STRING },
-              imgKeywords: { type: Type.STRING },
-              imgCount: { type: Type.INTEGER }
-            },
-            required: ["content", "imgKeywords", "imgCount"]
-          }
-        }
-      });
-
-      const result = JSON.parse(response.text || "{}");
-      
-      if (result.content) {
-        const keyword = (result.imgKeywords || "lifestyle").split(',')[0].trim();
-        const count = Math.min(9, Math.max(0, result.imgCount || 0));
-        
-        // Use a faster source: source.unsplash.com or simply more optimized lorempicsum keywords
-        const images = count > 0 
-          ? Array.from({ length: count }).map((_, i) => `https://loremflickr.com/400/400/${keyword}?lock=${Date.now() + i}`)
-          : [];
-
-        const newPost: Post = {
-            id: `p_gen_${Date.now()}`,
-            authorId: author.id,
-            content: result.content,
-            images: images,
-            likes: [],
-            comments: [],
-            timestamp: Date.now()
-        };
-        setPosts(prev => [newPost, ...prev]);
-      }
-    } catch (error) {
-      console.error("AI Refresh Error:", error);
+    const delay = 1200 + Math.random() * 800; 
+    await new Promise(resolve => setTimeout(resolve, delay));
+    let sourceData;
+    if (prefetchPool.current.length > 0) {
+      sourceData = prefetchPool.current.shift();
+    } else {
+      const local = LOCAL_MOMENTS_POOL[Math.floor(Math.random() * LOCAL_MOMENTS_POOL.length)];
+      sourceData = { ...local, authorId: friends[Math.floor(Math.random() * friends.length)].id };
     }
+    if (sourceData) {
+      const baseSeed = Math.floor(Math.random() * 1000);
+      const images = sourceData.imgCount > 0 
+        ? Array.from({ length: Math.min(sourceData.imgCount, 9) }).map((_, i) => `https://picsum.photos/400/400?random=${baseSeed + i}`)
+        : [];
+      const newPost: Post = {
+          id: `p_fast_${Date.now()}`,
+          authorId: sourceData.authorId,
+          content: sourceData.text,
+          images: images,
+          likes: [],
+          comments: [],
+          timestamp: Date.now()
+      };
+      setPosts(prev => [newPost, ...prev]);
+    }
+    if (prefetchPool.current.length < 2) fillPrefetchPool();
   }, [friends]);
 
   const toggleLike = (postId: string) => {
@@ -209,6 +255,10 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     const newComment: Comment = { id: `c_${Date.now()}`, userId: currentUser.id, userName: currentUser.name, content, timestamp: Date.now() };
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
   };
+
+  const markNotificationsAsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
 
   const getChatHistory = useCallback((targetId: string, isGroup: boolean = false) => {
     if (isGroup) return messages.filter(m => m.receiverId === targetId).sort((a, b) => a.timestamp - b.timestamp);
@@ -229,8 +279,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
           const f = friends.find(f => f.id === sessionId);
           if (g || f) {
               sessions[sessionId] = {
-                  id: sessionId,
-                  type,
+                  id: sessionId, type,
                   name: g ? g.name : (f?.remark || f?.name || 'Unknown'),
                   avatar: g ? g.avatar : (f?.avatar || ''),
                   lastMessage: null, unreadCount: 0
@@ -263,7 +312,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       currentUser, friends, groups, messages, posts, notifications, language, setLanguage,
       updateCurrentUser, addMessage, updateMessage, markAsRead, addFriend,
       deleteFriend, updateFriendRemark, addPost, refreshMoments, toggleLike, addComment,
-      getChatHistory, getChatSessions, getUser, t
+      markNotificationsAsRead, getChatHistory, getChatSessions, getUser, t
     }}>
       {children}
     </StoreContext.Provider>

@@ -202,7 +202,7 @@ export const CURRENT_USER: User = {
 };
 
 export const INITIAL_FRIENDS: User[] = [
-  // --- 亲人 (A系列) ---
+  // --- 亲人 ---
   { id: '2', name: '妈', avatar: 'https://picsum.photos/seed/mom_flower/200/200', phone: '13900000002', wxid: 'mom_love', signature: '知足常乐，平安是福。🍎' },
   { id: '8', name: '老婆大人', avatar: 'https://loremflickr.com/200/200/girl,beautiful?lock=8', phone: '13900000008', wxid: 'my_queen', signature: '家里我最大 ❤️' },
   { id: '43', name: '刘伯伯(二叔)', avatar: 'https://loremflickr.com/200/200/man,rich?lock=43', phone: '13900000043', wxid: 'cement_king_888', signature: '承接各型号水泥沙石，量大从优。' },
@@ -210,122 +210,101 @@ export const INITIAL_FRIENDS: User[] = [
   { id: '70', name: '远房舅妈', avatar: 'https://loremflickr.com/200/200/woman,middleaged?lock=70', phone: '13900000070', wxid: 'auntie_lucky', signature: '拼多多砍一刀，谢谢大家！🙏' },
   { id: '71', name: '二婶(老家特产)', avatar: 'https://loremflickr.com/200/200/farmer,woman?lock=71', phone: '13900000071', wxid: 'local_specialty', signature: '自家种的赣南脐橙，现摘现发。🍊' },
 
-  // --- 同学 (C系列 - 大量扩充) ---
+  // --- 同学 ---
   { id: '44', name: '林晚晚(班花)', avatar: 'https://loremflickr.com/200/200/girl,beautiful,cute?lock=44', phone: '13900000044', wxid: 'beauty_lin_0520', signature: '万物皆可爱，你也是。🌙' },
   { id: '52', name: '陈小希(学妹)', avatar: 'https://loremflickr.com/200/200/girl,young?lock=52', phone: '13900000052', wxid: 'chloe_sweet', signature: '学长，今天也要加油哦！✨' },
   { id: '42', name: '小王(网瘾少年)', avatar: 'https://loremflickr.com/200/200/boy,gaming?lock=42', phone: '13900000042', wxid: 'gamer_wang_666', signature: '排位滴滴，带飞全场。🎮' },
   { id: '51', name: '老班长', avatar: 'https://loremflickr.com/200/200/man,student?lock=51', phone: '13900000051', wxid: 'class_monitor', signature: '寻找失散多年的老同学。' },
-  { id: '72', name: '阿强(借作业那位)', avatar: 'https://loremflickr.com/200/200/boy,glasses?lock=72', phone: '13900000072', wxid: 'qiang_study', signature: '作业写完了吗？急求！🆘' },
+  { id: '72', name: '阿强', avatar: 'https://loremflickr.com/200/200/boy,glasses?lock=72', phone: '13900000072', wxid: 'qiang_study', signature: '作业写完了吗？急求！🆘' },
   { id: '73', name: '苏晴(女神)', avatar: 'https://loremflickr.com/200/200/girl,fashion?lock=73', phone: '13900000073', wxid: 'su_qing_v', signature: '不念过往，不惧将来。' },
-  { id: '74', name: '大壮(体育委员)', avatar: 'https://loremflickr.com/200/200/man,gym?lock=74', phone: '13900000074', wxid: 'strong_man_da', signature: '篮球场见，不服来战！🏀' },
-  { id: '75', name: '林舒(学习委员)', avatar: 'https://loremflickr.com/200/200/woman,glasses?lock=75', phone: '13900000075', wxid: 'lin_study_rep', signature: '书山有路勤为径。📚' },
+  { id: '74', name: '大壮(体委)', avatar: 'https://loremflickr.com/200/200/man,gym?lock=74', phone: '13900000074', wxid: 'strong_man_da', signature: '篮球场见，不服来战！🏀' },
+  { id: '75', name: '林舒(学委)', avatar: 'https://loremflickr.com/200/200/woman,glasses?lock=75', phone: '13900000075', wxid: 'lin_study_rep', signature: '书山有路勤为径。📚' },
   { id: '76', name: '张伟(寝室长)', avatar: 'https://loremflickr.com/200/200/man,casual?lock=76', phone: '13900000076', wxid: 'dorm_leader_zhang', signature: '今晚开黑，谁不来谁是孙子。' },
   { id: '77', name: '考研搭子-李华', avatar: 'https://loremflickr.com/200/200/boy,library?lock=77', phone: '13900000077', wxid: 'kaoyan_lihua', signature: '一研为定，顶峰相见。' },
   { id: '78', name: '小学同桌-圆圆', avatar: 'https://loremflickr.com/200/200/girl,child?lock=78', phone: '13900000078', wxid: 'yuan_yuan_90', signature: '好久不见，你变样了吗？' },
 
-  // --- 职场 (W系列) ---
+  // --- 职场 ---
   { id: '3', name: 'Boss张', avatar: 'https://picsum.photos/seed/boss_suit/200/200', phone: '13900000003', wxid: 'boss_zhang_pro', signature: '结果导向，效率第一。' },
   { id: '10', name: '卷王Jack', avatar: 'https://picsum.photos/seed/geek_man/200/200', phone: '13900000010', wxid: 'jack_nonstop', signature: '凌晨四点的办公室。💻' },
   { id: '58', name: '张总(甲方爸爸)', avatar: 'https://loremflickr.com/200/200/man,boss?lock=58', phone: '13900000058', wxid: 'client_boss_zhang', signature: '这个方案再改一版。' },
-  { id: '59', name: 'HR小姐姐-Vivi', avatar: 'https://loremflickr.com/200/200/woman,office?lock=59', phone: '13900000059', wxid: 'hr_vivi_recruiter', signature: '急招前端开发，内推私。🌟' },
+  { id: '59', name: 'HR-Vivi', avatar: 'https://loremflickr.com/200/200/woman,office?lock=59', phone: '13900000059', wxid: 'hr_vivi_recruiter', signature: '急招前端开发，内推私。🌟' },
   { id: '60', name: '程序猿大刘', avatar: 'https://loremflickr.com/200/200/coding,man?lock=60', phone: '13900000060', wxid: 'linux_fan', signature: 'Hello World.' },
   { id: '61', name: 'UI设计-小甜', avatar: 'https://loremflickr.com/200/200/woman,designer?lock=61', phone: '13900000061', wxid: 'pixel_sweet', signature: '别改需求了，求求了。🎨' },
   { id: '79', name: '前台-曼曼', avatar: 'https://loremflickr.com/200/200/woman,cute?lock=79', phone: '13900000079', wxid: 'front_manman', signature: '微笑面对每一天。😊' },
 
-  // --- 生活服务 (S系列 - 琳琅满目) ---
+  // --- 生活服务 ---
   { id: '40', name: '理发师Tony', avatar: 'https://loremflickr.com/200/200/hairdresser?lock=40', phone: '13900000040', wxid: 'tony_top_cut', signature: '剪发找Tony，时尚不迷路。💇‍♂️' },
   { id: '41', name: '代购大表姐', avatar: 'https://loremflickr.com/200/200/fashion,woman?lock=41', phone: '13900000041', wxid: 'paris_shopping_pro', signature: '正品代购，汇率变动私聊。' },
-  { id: '45', name: '物业张主任', avatar: 'https://loremflickr.com/200/200/man,elderly?lock=45', phone: '13900000045', wxid: 'property_zhang', signature: '建设文明社区。' },
   { id: '46', name: '顺丰快递-小周', avatar: 'https://loremflickr.com/200/200/man,delivery?lock=46', phone: '13900000046', wxid: 'sf_zhou_fast', signature: '您的包裹我守护。📦' },
-  { id: '53', name: '房产中介-小张', avatar: 'https://loremflickr.com/200/200/man,suit?lock=53', phone: '13900000053', wxid: 'home_expert_zhang', signature: '买房找我，省心省力。🏢' },
-  { id: '54', name: '卖保险的陈哥', avatar: 'https://loremflickr.com/200/200/man,suit,china?lock=54', phone: '13900000054', wxid: 'insure_pro_chen', signature: '爱家就给家一份保障。' },
+  { id: '53', name: '中介-小张', avatar: 'https://loremflickr.com/200/200/man,suit?lock=53', phone: '13900000053', wxid: 'home_expert_zhang', signature: '买房找我，省心省力。🏢' },
+  { id: '54', name: '保险-陈哥', avatar: 'https://loremflickr.com/200/200/man,suit,china?lock=54', phone: '13900000054', wxid: 'insure_pro_chen', signature: '爱家就给家一份保障。' },
   { id: '55', name: '奶茶店-小美', avatar: 'https://loremflickr.com/200/200/girl,cafe?lock=55', phone: '13900000055', wxid: 'milktea_meimei', signature: '今天的奶茶加珍珠吗？🍵' },
-  { id: '56', name: '健身教练Jacky', avatar: 'https://loremflickr.com/200/200/man,muscle?lock=56', phone: '13900000056', wxid: 'fit_king_jacky', signature: '自律给我自由。💪' },
-  { id: '57', name: '大排档李师傅', avatar: 'https://loremflickr.com/200/200/man,cook?lock=57', phone: '13900000057', wxid: 'bbq_master_li', signature: '碳水万岁，撸串万岁。🍢' },
-  { id: '80', name: '美甲师-Cici', avatar: 'https://loremflickr.com/200/200/woman,nails?lock=80', phone: '13900000080', wxid: 'nail_art_cici', signature: '指尖艺术，美丽从手开始。💅' },
-  { id: '81', name: '装修-李工', avatar: 'https://loremflickr.com/200/200/man,working?lock=81', phone: '13900000081', wxid: 'deco_expert_li', signature: '专业家装，水电木工。🔨' },
-  { id: '82', name: '开锁-王师傅', avatar: 'https://loremflickr.com/200/200/man,keys?lock=82', phone: '13900000082', wxid: 'lock_smith_wang', signature: '24小时应急开锁，备案商家。🔑' },
+  { id: '56', name: '教练Jacky', avatar: 'https://loremflickr.com/200/200/man,muscle?lock=56', phone: '13900000056', wxid: 'fit_king_jacky', signature: '自律给我自由。💪' },
+  { id: '80', name: '美甲-Cici', avatar: 'https://loremflickr.com/200/200/woman,nails?lock=80', phone: '13900000080', wxid: 'nail_art_cici', signature: '指尖艺术。💅' },
   { id: '83', name: '茶叶小妹-小青', avatar: 'https://loremflickr.com/200/200/girl,tea?lock=83', phone: '13900000083', wxid: 'tea_girl_qing', signature: '爷爷亲手炒的武夷山大红袍。🍃' },
 
-  // --- 更多同学和朋友 (扩充到底部) ---
-  { id: '84', name: '隔壁老王', avatar: 'https://loremflickr.com/200/200/man,funny?lock=84', phone: '13900000084', wxid: 'neighbor_wang', signature: '邻里互助，和谐社会。' },
-  { id: '85', name: '初恋-林雪', avatar: 'https://loremflickr.com/200/200/girl,snow?lock=85', phone: '13900000085', wxid: 'snow_lin_past', signature: '那一年的雪，你还记得吗？❄️' },
-  { id: '86', name: '酒肉朋友-大刘', avatar: 'https://loremflickr.com/200/200/man,beer?lock=86', phone: '13900000086', wxid: 'beer_lover_liu', signature: '今晚不醉不归。🍻' },
+  // --- 更多 ---
+  { id: '84', name: '隔壁老王', avatar: 'https://loremflickr.com/200/200/man,funny?lock=84', phone: '13900000084', wxid: 'neighbor_wang', signature: '邻里互助。' },
+  { id: '85', name: '初恋-林雪', avatar: 'https://loremflickr.com/200/200/girl,snow?lock=85', phone: '13900000085', wxid: 'snow_lin_past', signature: '那一年的雪。❄️' },
+  { id: '86', name: '大刘', avatar: 'https://loremflickr.com/200/200/man,beer?lock=86', phone: '13900000086', wxid: 'beer_lover_liu', signature: '不醉不归。🍻' },
   { id: '87', name: '前女友-丽丽', avatar: 'https://loremflickr.com/200/200/girl,angry?lock=87', phone: '13900000087', wxid: 'lili_angry', signature: '别再烦我了。' },
-  { id: '88', name: '健身搭子-阿华', avatar: 'https://loremflickr.com/200/200/man,sports?lock=88', phone: '13900000088', wxid: 'gym_buddy_hua', signature: '练胸日，走起。' },
-  { id: '89', name: '暗恋你的小学妹-糖糖', avatar: 'https://loremflickr.com/200/200/girl,blush?lock=89', phone: '13900000089', wxid: 'tang_tang_sweet', signature: '每天偷偷看你一眼就好。💕' },
-  { id: '90', name: '大学室友-二胖', avatar: 'https://loremflickr.com/200/200/boy,fat?lock=90', phone: '13900000090', wxid: 'fatty_bro', signature: '减肥中，勿约饭。' },
-  { id: '91', name: '驴友-阿风', avatar: 'https://loremflickr.com/200/200/man,hiker?lock=91', phone: '13900000091', wxid: 'wind_traveler', signature: '身体和灵魂总有一个在路上。🏔️' },
-  { id: '92', name: '麻友-李大爷', avatar: 'https://loremflickr.com/200/200/man,old?lock=92', phone: '13900000092', wxid: 'mahjong_king', signature: '三缺一，速来。🀄' },
+  { id: '89', name: '学妹-糖糖', avatar: 'https://loremflickr.com/200/200/girl,blush?lock=89', phone: '13900000089', wxid: 'tang_tang_sweet', signature: '💕' },
+  { id: '90', name: '二胖', avatar: 'https://loremflickr.com/200/200/boy,fat?lock=90', phone: '13900000090', wxid: 'fatty_bro', signature: '减肥中。' },
+  { id: '91', name: '阿风', avatar: 'https://loremflickr.com/200/200/man,hiker?lock=91', phone: '13900000091', wxid: 'wind_traveler', signature: '在路上。🏔️' },
+  { id: '92', name: '李大爷', avatar: 'https://loremflickr.com/200/200/man,old?lock=92', phone: '13900000092', wxid: 'mahjong_king', signature: '三缺一。🀄' },
 ];
 
 export const MOCK_GROUPS: Group[] = [
-  {
-    id: 'g1',
-    name: '相亲相爱一家人',
-    avatar: 'https://picsum.photos/seed/lotus_flower/200/200',
-    members: ['me', '2', '43', '50', '70', '71'],
-    notice: 'Family first! ❤️'
-  },
-  {
-    id: 'g2',
-    name: '公司项目同步群(5)',
-    avatar: 'https://loremflickr.com/200/200/office,group?lock=100',
-    members: ['me', '3', '58', '60', '61', '59'],
-    notice: '严禁群内刷屏。'
-  },
-  {
-    id: 'g3',
-    name: 'XX届同学聚会筹备',
-    avatar: 'https://loremflickr.com/200/200/students,party?lock=101',
-    members: ['me', '44', '42', '51', '72', '73', '74', '75', '76'],
-    notice: '下周六聚餐，还没报名的抓紧。'
-  }
+  { id: 'g1', name: '相亲相爱一家人', avatar: 'https://picsum.photos/seed/lotus_flower/200/200', members: ['me', '2', '43', '50', '70', '71'], notice: 'Family first! ❤️' },
+  { id: 'g2', name: '公司项目同步群(5)', avatar: 'https://loremflickr.com/200/200/office,group?lock=100', members: ['me', '3', '58', '60', '61', '59'], notice: '严禁群内刷屏。' },
+  { id: 'g3', name: 'XX届同学聚会筹备', avatar: 'https://loremflickr.com/200/200/students,party?lock=101', members: ['me', '44', '42', '51', '72', '73', '74', '75', '76'], notice: '下周六聚餐，还没报名的抓紧。' }
 ];
 
-export const MOCK_MESSAGES: Message[] = [
-  { id: 'm1', senderId: '3', receiverId: 'me', content: 'Leo，明天早上那个会议的PPT准备好了吗？', type: 'text', timestamp: Date.now() - 300000, read: false },
-  { id: 'm44', senderId: '44', receiverId: 'me', content: '刚才在朋友圈看到你发的图了，感觉你最近状态不错嘛。', type: 'text', timestamp: Date.now() - 500000, read: false },
-  { id: 'm52', senderId: '52', receiverId: 'me', content: '学长，这周六有空一起去图书馆吗？我有几道题想请教。', type: 'text', timestamp: Date.now() - 600000, read: false },
-  { id: 'm70', senderId: '70', receiverId: 'me', content: '[微信红包] 帮舅妈砍一刀，链接就在群里！', type: 'text', timestamp: Date.now() - 1200000, read: false },
-  { id: 'm40', senderId: '40', receiverId: 'me', content: '亲，店里新到了一位首席发型师，要不要约个时间过来体验下？', type: 'text', timestamp: Date.now() - 1500000, read: false },
-  { id: 'm72', senderId: '72', receiverId: 'me', content: '强哥，作业救急！那道高数大题拍个照给我。', type: 'text', timestamp: Date.now() - 1800000, read: false },
-  { id: 'm83', senderId: '83', receiverId: 'me', content: '哥哥，家里茶园的新茶采好了，寄点给你尝尝呀？', type: 'text', timestamp: Date.now() - 2500000, read: false },
-  { id: 'm54', senderId: '54', receiverId: 'me', content: '李先生，关于您上次咨询的那个重疾险方案，我有新的优化。', type: 'text', timestamp: Date.now() - 3600000, read: false },
-  { id: 'm41', senderId: '41', receiverId: 'me', content: '香奈儿这款包补货了，全巴黎最后两只，要的速度！', type: 'text', timestamp: Date.now() - 5000000, read: false },
-  { id: 'm53', senderId: '53', receiverId: 'me', content: '您关注的那套房降价了50万，业主急售！', type: 'text', timestamp: Date.now() - 7200000, read: false },
-  { id: 'm89', senderId: '89', receiverId: 'me', content: '学长... 那个... 你这周有空吗？', type: 'text', timestamp: Date.now() - 10000000, read: false },
-  { id: 'm92', senderId: '92', receiverId: 'me', content: '怎么老不接电话，三缺一就等你呢！', type: 'text', timestamp: Date.now() - 14400000, read: false },
-  { id: 'm2', senderId: '2', receiverId: 'me', content: '儿砸，天冷了记得穿秋裤！', type: 'audio', duration: 12, timestamp: Date.now() - 86400000, read: true }, 
-  { id: 'm43', senderId: '43', receiverId: 'me', content: '小伙子，有空来伯伯这里坐坐。', type: 'text', timestamp: Date.now() - 172800000, read: true },
-];
+// --- 深度扩充聊天列表内容 ---
+const generateBatchMessages = () => {
+  const msgs: Message[] = [
+    // --- 置顶与重点联系人 ---
+    { id: 'm3_1', senderId: '3', receiverId: 'me', content: 'Leo，明天早上那个会议的PPT准备好了吗？', type: 'text', timestamp: Date.now() - 300000, read: false },
+    { id: 'm8_1', senderId: '8', receiverId: 'me', content: '[语音消息]', type: 'audio', duration: 8, timestamp: Date.now() - 60000, read: false },
+    { id: 'm8_2', senderId: '8', receiverId: 'me', content: '快点回消息，别装死！', type: 'text', timestamp: Date.now() - 50000, read: false },
+    
+    // --- 群聊活跃 ---
+    { id: 'mg1_1', senderId: '2', receiverId: 'g1', content: '大家早安，记得吃早饭。🍎', type: 'text', timestamp: Date.now() - 100000, read: false },
+    { id: 'mg1_2', senderId: '43', receiverId: 'g1', content: '[链接] 震惊！这五种习惯正在透支你的生命...', type: 'text', timestamp: Date.now() - 90000, read: false },
+    { id: 'mg2_1', senderId: '60', receiverId: 'g2', content: 'BUG已经修好了，大家可以Pull一下代码。', type: 'text', timestamp: Date.now() - 120000, read: false },
+    { id: 'mg3_1', senderId: '51', receiverId: 'g3', content: '目前报名的已经有12个人了。', type: 'text', timestamp: Date.now() - 200000, read: false }
+  ];
+
+  // 为大部分好友生成“最后一条消息”，确保列表长到需要滚动
+  INITIAL_FRIENDS.slice(2).forEach((f, index) => {
+    const isUnread = Math.random() > 0.3; // 70% 的对话有未读红点
+    const timestamp = Date.now() - (index * 600000 + Math.random() * 100000);
+    
+    const randomContents = [
+        '好的，没问题。', '[图片]', '[语音消息]', '在吗？', '哈哈哈，笑死我了', '那个链接发我一下',
+        '微信红包', '转账给你', '亲，有空帮我投个票吗？', '老地方见', '新年快乐', '这次聚会你去吗？',
+        '老板刚才找你呢', '文件已经发你邮箱了', '？', '。 。 。', '我也觉得', '那行吧', '等下说',
+        '视频号：这只猫火了！'
+    ];
+
+    msgs.push({
+      id: `m_gen_${f.id}`,
+      senderId: f.id,
+      receiverId: 'me',
+      content: randomContents[index % randomContents.length],
+      type: randomContents[index % randomContents.length].includes('红包') ? 'red_packet' : (randomContents[index % randomContents.length].includes('语音') ? 'audio' : 'text'),
+      timestamp: timestamp,
+      read: !isUnread,
+      duration: 5
+    });
+  });
+
+  return msgs.sort((a, b) => b.timestamp - a.timestamp);
+};
+
+export const MOCK_MESSAGES: Message[] = generateBatchMessages();
 
 export const MOCK_POSTS_INITIAL: Post[] = [
-  {
-    id: 'p1',
-    authorId: '2', 
-    content: '立冬吃饺子，好运连连！🎏',
-    images: ['https://loremflickr.com/400/300/dumpling,food?lock=1'],
-    likes: ['2', 'me', '43'],
-    comments: [],
-    timestamp: Date.now() - 7200000
-  },
-  {
-    id: 'p73',
-    authorId: '73', 
-    content: '今日份的美丽心情。✨',
-    images: ['https://loremflickr.com/400/300/girl,sunshine?lock=73'],
-    likes: ['me', '44', '51', '74'],
-    comments: [{ id: 'c74', userId: '74', userName: '大壮(体育委员)', content: '真好看！', timestamp: Date.now() - 1000000 }],
-    timestamp: Date.now() - 3600000
-  },
-  {
-    id: 'p43',
-    authorId: '43', 
-    content: '天行健，君子以自强不息。共勉！💪',
-    images: ['https://loremflickr.com/400/300/mountain,sunrise?lock=43'],
-    likes: ['me', '2'],
-    comments: [],
-    timestamp: Date.now() - 14400000
-  }
+  { id: 'p1', authorId: '2', content: '立冬吃饺子，好运连连！🎏', images: ['https://loremflickr.com/400/300/dumpling,food?lock=1'], likes: ['2', 'me', '43'], comments: [], timestamp: Date.now() - 7200000 },
+  { id: 'p73', authorId: '73', content: '今日份的美丽心情。✨', images: ['https://loremflickr.com/400/300/girl,sunshine?lock=73'], likes: ['me', '44', '51', '74'], comments: [{ id: 'c74', userId: '74', userName: '大壮(体委)', content: '真好看！', timestamp: Date.now() - 1000000 }], timestamp: Date.now() - 3600000 },
 ];
