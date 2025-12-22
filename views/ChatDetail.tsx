@@ -7,7 +7,7 @@ import { IconVoice, IconKeyboard, IconMore, IconPlus, IconFace, IconRedPacket, I
 import { GoogleGenAI } from "@google/genai";
 
 interface ChatDetailProps {
-  id: string; // userId or groupId
+  id: string; 
   chatType: 'user' | 'group';
   onBack: () => void;
   onNavigate: (view: ViewState) => void;
@@ -16,6 +16,11 @@ interface ChatDetailProps {
 const EMOJIS = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😙", "😚", "🙂", "🤗", "🤔", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "🤑", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰", "😱", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "😇", "🤠", "🤠", "🤡", "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "👿", "👹", "👺", "💀", "👻", "👽", "🤖", "💩", "🙏", "👍", "👎", "👊", "👌", "💪", "👏", "🙌", "👐", "👋", "💋", "💘", "❤️", "💓", "💔", "💕", "💖", "💗", "💙", "💚", "💛", "💜", "🖤", "💝", "💞", "💟"];
 
 const callGeminiAI = async (targetUser: any, currentUser: any, history: Message[]) => {
+    if (!process.env.API_KEY || process.env.API_KEY === 'undefined') {
+        console.error("Gemini API Key is missing! Please set API_KEY in Vercel environment variables.");
+        return { text: "微信号异常 (未配置 API Key)", sources: [] };
+    }
+
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const systemInstruction = `
@@ -24,10 +29,10 @@ const callGeminiAI = async (targetUser: any, currentUser: any, history: Message[
             Your personality/signature: "${targetUser.signature || 'Friendly and helpful'}".
             
             RULES:
-            1. Respond in the language used by the user (usually Chinese or English).
-            2. Keep responses CONCISE and MOBILE-FRIENDLY (1-3 sentences max). Use emojis naturally.
-            3. Be human-like and stay in character.
-            4. If the user sent a Red Packet or Transfer, acknowledge it warmly after you "received" it.
+            1. Respond in Chinese (Simplified).
+            2. Keep responses CONCISE and MOBILE-FRIENDLY (1-2 short sentences). Use 1-2 emojis naturally.
+            3. Be human-like: use informal particle words like "哈", "呀", "了", "哈".
+            4. If the user sent a Red Packet or Transfer, say thanks and ask what it's for.
         `;
 
         const chatContext = history.slice(-5).map(m => {
@@ -40,12 +45,13 @@ const callGeminiAI = async (targetUser: any, currentUser: any, history: Message[
             contents: `Context history:\n${chatContext}\n\nLast message from ${currentUser.name}: "${history[history.length-1].content}"`,
             config: {
                 systemInstruction,
-                tools: [{ googleSearch: {} }],
-                temperature: 0.8,
+                temperature: 0.9,
             },
         });
-        return { text: response.text || "...", sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks || [] };
+        
+        return { text: response.text || "...", sources: [] };
     } catch (error) {
+        console.error("Gemini API Error:", error);
         return { text: "网络好像有点断断续续的...", sources: [] };
     }
 };
@@ -82,10 +88,9 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
     };
   }, [id]);
 
-  // 处理玩家点击领取红包/确认转账
   const handleMoneyClick = useCallback((msg: Message) => {
-      if (msg.senderId === currentUser.id) return; // 不能领自己发的
-      if (msg.status === 'accepted' || msg.status === 'opened') return; // 已处理
+      if (msg.senderId === currentUser.id) return;
+      if (msg.status === 'accepted' || msg.status === 'opened') return;
 
       if (msg.type === 'red_packet') {
           updateMessage(msg.id, { status: 'opened' });
@@ -112,7 +117,6 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
       }
   }, [currentUser.id, id, targetName, updateMessage, addMessage]);
 
-  // AI 自动响应逻辑
   useEffect(() => {
       if (chatType === 'user' && history.length > 0) {
            const lastMsg = history[history.length - 1];
@@ -120,7 +124,6 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                if (lastProcessedMsgId.current === lastMsg.id) return;
                lastProcessedMsgId.current = lastMsg.id;
 
-               // 如果玩家发了钱，AI 模拟“领取”
                if (lastMsg.type === 'red_packet' || lastMsg.type === 'transfer') {
                     const tMoney = setTimeout(() => {
                         updateMessage(lastMsg.id, { status: lastMsg.type === 'red_packet' ? 'opened' : 'accepted' });
@@ -134,7 +137,6 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                             read: true
                         });
                         
-                        // 领取后说声谢谢
                         const tReply = setTimeout(async () => {
                             const { text } = await callGeminiAI(targetUser, currentUser, history);
                             addMessage({ id: `rep_ai_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
@@ -145,21 +147,16 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                     return;
                }
 
-               // 普通文本消息回复
                if (lastMsg.type === 'text' || lastMsg.type === 'audio') {
                    const t1 = setTimeout(() => setIsTyping(true), 800);
                    activeTimers.current.push(t1);
 
                    const triggerAI = async () => {
-                        const { text, sources } = await callGeminiAI(targetUser, currentUser, history);
-                        const typingTime = Math.min(3000, Math.max(1000, text.length * 100));
+                        const { text } = await callGeminiAI(targetUser, currentUser, history);
+                        const typingTime = Math.min(2500, Math.max(1000, text.length * 100));
                         const t2 = setTimeout(() => {
                             setIsTyping(false);
-                            let finalContent = text;
-                            if (sources && sources.length > 0) {
-                                finalContent += sources.filter((s: any) => s.web?.uri).map((s: any) => `\n\n资料来源: ${s.web.title || '网页'} (${s.web.uri})`).join('');
-                            }
-                            addMessage({ id: `rep_ai_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: finalContent, type: 'text', timestamp: Date.now(), read: false });
+                            addMessage({ id: `rep_ai_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
                         }, typingTime);
                         activeTimers.current.push(t2);
                    };
@@ -274,7 +271,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
         <div className="p-2 flex items-center gap-2">
             <button onClick={() => setIsAudioMode(!isAudioMode)} className="text-gray-600 p-1">{isAudioMode ? <IconKeyboard /> : <IconVoice />}</button>
             {isAudioMode ? (
-                <button className="flex-1 bg-white border border-gray-300 rounded-md py-2 text-center font-medium active:bg-gray-200" onMouseDown={(e) => { e.preventDefault(); handleSendAudio(t('voice_message')); }}>{t('hold_to_talk')}</button>
+                <button className="flex-1 bg-white border border-gray-300 rounded-md py-2 text-center font-medium active:bg-gray-200">{t('hold_to_talk')}</button>
             ) : (
                 <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} className="flex-1 bg-white border border-gray-200 rounded-md px-3 py-2 text-base outline-none focus:border-green-500" />
             )}

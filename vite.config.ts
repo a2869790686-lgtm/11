@@ -6,13 +6,11 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   define: {
-    // 确保 process.env.API_KEY 在浏览器端可用
+    // 关键：将 Vercel 的环境变量注入到浏览器的 process.env 对象中
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
   },
   build: {
-    rollupOptions: {
-      // 告诉 Rollup 不要打包这个模块，浏览器会通过 importmap 处理
-      external: ['@google/genai'],
-    },
-  },
+    // 允许打包大型模块
+    chunkSizeWarningLimit: 1000,
+  }
 })

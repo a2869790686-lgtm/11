@@ -103,6 +103,13 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
   const fillPrefetchPool = async () => {
     if (isPrefetching.current || friends.length === 0) return;
+    
+    // 防御性检查：确保 API_KEY 存在且不是字符串 "undefined"
+    if (!process.env.API_KEY || process.env.API_KEY === 'undefined' || process.env.API_KEY === '') {
+      console.warn("AI Prefetch skipped: API_KEY is missing.");
+      return;
+    }
+
     isPrefetching.current = true;
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -149,6 +156,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
             read: false
           }, ...prev]);
         } else {
+          // 评论也需要 Key
+          if (!process.env.API_KEY || process.env.API_KEY === 'undefined') return;
           try {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = `你是"${friend.name}"。你的朋友刚刚发了朋友圈："${content}"。请写一条极其真实且简短的微信评论。如果是长辈就发鼓励，如果是年轻人就发玩梗或吐槽。极短（10字以内）。`;
