@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
@@ -76,6 +75,11 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return saved ? JSON.parse(saved) : MOCK_MESSAGES;
   });
 
+  const [friendsList, setFriendsList] = useState<User[]>(() => {
+    const saved = localStorage.getItem('wx_friends');
+    return saved ? JSON.parse(saved) : INITIAL_FRIENDS;
+  });
+
   const [posts, setPosts] = useState<Post[]>(() => {
     const saved = localStorage.getItem('wx_posts');
     return saved ? JSON.parse(saved) : MOCK_POSTS_INITIAL;
@@ -91,28 +95,29 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
   useEffect(() => localStorage.setItem('wx_current_user', JSON.stringify(currentUser)), [currentUser]);
   useEffect(() => localStorage.setItem('wx_language', language), [language]);
-  useEffect(() => localStorage.setItem('wx_friends', JSON.stringify(friends)), [friends]);
+  useEffect(() => localStorage.setItem('wx_friends', JSON.stringify(friendsList)), [friendsList]);
   useEffect(() => localStorage.setItem('wx_groups', JSON.stringify(groups)), [groups]);
   useEffect(() => localStorage.setItem('wx_messages', JSON.stringify(messages)), [messages]);
   useEffect(() => localStorage.setItem('wx_posts', JSON.stringify(posts)), [posts]);
   useEffect(() => localStorage.setItem('wx_notifications', JSON.stringify(notifications)), [notifications]);
 
   useEffect(() => {
-    setTimeout(() => fillPrefetchPool(), 2000);
+    const t = setTimeout(() => fillPrefetchPool(), 3000);
+    return () => clearTimeout(t);
   }, []);
 
   const fillPrefetchPool = async () => {
-    if (isPrefetching.current || friends.length === 0) return;
+    if (isPrefetching.current || friendsList.length === 0) return;
     
-    // 防御性检查：确保 API_KEY 存在且不是字符串 "undefined"
-    if (!process.env.API_KEY || process.env.API_KEY === 'undefined' || process.env.API_KEY === '') {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined' || apiKey === '') {
       console.warn("AI Prefetch skipped: API_KEY is missing.");
       return;
     }
 
     isPrefetching.current = true;
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `生成3条极其真实的中国版微信朋友圈动态。数组返回：[{"text":"...", "imgCount": 0-9}, ...]`;
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -122,7 +127,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       const results = JSON.parse(response.text || "[]");
       if (Array.isArray(results)) {
         results.forEach(res => {
-          prefetchPool.current.push({ ...res, authorId: friends[Math.floor(Math.random() * friends.length)].id });
+          prefetchPool.current.push({ ...res, authorId: friendsList[Math.floor(Math.random() * friendsList.length)].id });
         });
       }
     } catch (e) {
@@ -133,8 +138,9 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   };
 
   const simulateFeedback = useCallback(async (postId: string, content: string) => {
+    const apiKey = process.env.API_KEY;
     const interactionCount = 3 + Math.floor(Math.random() * 5);
-    const availableFriends = [...friends].sort(() => Math.random() - 0.5);
+    const availableFriends = [...friendsList].sort(() => Math.random() - 0.5);
 
     for (let i = 0; i < interactionCount; i++) {
       const friend = availableFriends[i];
@@ -156,10 +162,9 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
             read: false
           }, ...prev]);
         } else {
-          // 评论也需要 Key
-          if (!process.env.API_KEY || process.env.API_KEY === 'undefined') return;
+          if (!apiKey || apiKey === 'undefined') return;
           try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey });
             const prompt = `你是"${friend.name}"。你的朋友刚刚发了朋友圈："${content}"。请写一条极其真实且简短的微信评论。如果是长辈就发鼓励，如果是年轻人就发玩梗或吐槽。极短（10字以内）。`;
             const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
             const commentText = response.text?.trim() || "赞！";
@@ -180,7 +185,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
         }
       }, delay);
     }
-  }, [friends]);
+  }, [friendsList]);
 
   const updateCurrentUser = (updates: Partial<User>) => setCurrentUser(prev => ({ ...prev, ...updates }));
   
@@ -202,19 +207,19 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   }, [currentUser.id]);
 
   const addFriend = useCallback((phone: string) => {
-    const exists = friends.find(f => f.phone === phone);
+    const exists = friendsList.find(f => f.phone === phone);
     if (exists) return false;
     const newUser: User = { id: `new_${Date.now()}`, name: `用户 ${phone.slice(-4)}`, avatar: `https://picsum.photos/seed/${phone}/200/200`, phone: phone, wxid: `wx_${phone}` };
-    setFriends(prev => [...prev, newUser]);
+    setFriendsList(prev => [...prev, newUser]);
     return true;
-  }, [friends]);
+  }, [friendsList]);
 
   const deleteFriend = useCallback((id: string) => {
-    setFriends(prev => prev.filter(f => f.id !== id));
+    setFriendsList(prev => prev.filter(f => f.id !== id));
     setMessages(prev => prev.filter(m => m.senderId !== id && m.receiverId !== id));
   }, []);
 
-  const updateFriendRemark = (id: string, remark: string) => setFriends(prev => prev.map(f => f.id === id ? { ...f, remark } : f));
+  const updateFriendRemark = (id: string, remark: string) => setFriendsList(prev => prev.map(f => f.id === id ? { ...f, remark } : f));
 
   const addPost = useCallback((content: string, images: string[]) => {
     const newPostId = `p_${Date.now()}`;
@@ -231,7 +236,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       sourceData = prefetchPool.current.shift();
     } else {
       const local = LOCAL_MOMENTS_POOL[Math.floor(Math.random() * LOCAL_MOMENTS_POOL.length)];
-      sourceData = { ...local, authorId: friends[Math.floor(Math.random() * friends.length)].id };
+      sourceData = { ...local, authorId: friendsList[Math.floor(Math.random() * friendsList.length)].id };
     }
     if (sourceData) {
       const baseSeed = Math.floor(Math.random() * 1000);
@@ -250,7 +255,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       setPosts(prev => [newPost, ...prev]);
     }
     if (prefetchPool.current.length < 2) fillPrefetchPool();
-  }, [friends]);
+  }, [friendsList]);
 
   const toggleLike = (postId: string) => {
     setPosts(prev => prev.map(p => {
@@ -285,7 +290,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
       if (!sessions[sessionId]) {
           const g = groups.find(g => g.id === sessionId);
-          const f = friends.find(f => f.id === sessionId);
+          const f = friendsList.find(f => f.id === sessionId);
           if (g || f) {
               sessions[sessionId] = {
                   id: sessionId, type,
@@ -305,20 +310,20 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       }
     });
     return Object.values(sessions).sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0));
-  }, [messages, friends, groups, currentUser.id]);
+  }, [messages, friendsList, groups, currentUser.id]);
 
   const getUser = useCallback((id: string) => {
       if (id === currentUser.id) return currentUser;
-      const friend = friends.find(u => u.id === id);
+      const friend = friendsList.find(u => u.id === id);
       if (friend) return { ...friend, name: friend.remark || friend.name };
       return undefined;
-  }, [friends, currentUser]);
+  }, [friendsList, currentUser]);
   
   const t = useCallback((key: keyof typeof TRANSLATIONS['en']) => TRANSLATIONS[language][key] || key, [language]);
 
   return (
     <StoreContext.Provider value={{
-      currentUser, friends, groups, messages, posts, notifications, language, setLanguage,
+      currentUser, friends: friendsList, groups, messages, posts, notifications, language, setLanguage,
       updateCurrentUser, addMessage, updateMessage, markAsRead, addFriend,
       deleteFriend, updateFriendRemark, addPost, refreshMoments, toggleLike, addComment,
       markNotificationsAsRead, getChatHistory, getChatSessions, getUser, t

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
@@ -16,13 +15,15 @@ interface ChatDetailProps {
 const EMOJIS = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😙", "😚", "🙂", "🤗", "🤔", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "🤑", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰", "😱", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "😇", "🤠", "🤠", "🤡", "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "👿", "👹", "👺", "💀", "👻", "👽", "🤖", "💩", "🙏", "👍", "👎", "👊", "👌", "💪", "👏", "🙌", "👐", "👋", "💋", "💘", "❤️", "💓", "💔", "💕", "💖", "💗", "💙", "💚", "💛", "💜", "🖤", "💝", "💞", "💟"];
 
 const callGeminiAI = async (targetUser: any, currentUser: any, history: Message[]) => {
-    if (!process.env.API_KEY || process.env.API_KEY === 'undefined') {
-        console.error("Gemini API Key is missing! Please set API_KEY in Vercel environment variables.");
+    const apiKey = process.env.API_KEY;
+    
+    if (!apiKey || apiKey === 'undefined' || apiKey.length < 10) {
+        console.error("Gemini API Key is missing or invalid in process.env.API_KEY");
         return { text: "微信号异常 (未配置 API Key)", sources: [] };
     }
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const systemInstruction = `
             You are ${targetUser.name} (WeChat ID: ${targetUser.wxid}) on a mobile messaging app called WeChat.
             Your relationship to the user is: ${targetUser.remark || 'Friend/Contact'}.
