@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
@@ -5,8 +6,9 @@ import { Header } from '../components/Layout';
 import { IconVoice, IconKeyboard, IconMore, IconPlus, IconFace, IconRedPacket, IconTransfer, IconCamera } from '../components/Icons';
 import { GoogleGenAI } from "@google/genai";
 
+// Define the missing ChatDetailProps interface
 interface ChatDetailProps {
-  id: string; 
+  id: string;
   chatType: 'user' | 'group';
   onBack: () => void;
   onNavigate: (view: ViewState) => void;
@@ -14,48 +16,45 @@ interface ChatDetailProps {
 
 const EMOJIS = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😙", "😚", "🙂", "🤗", "🤔", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "🤑", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰", "😱", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "😇", "🤠", "🤠", "🤡", "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "👿", "👹", "👺", "💀", "👻", "👽", "🤖", "💩", "🙏", "👍", "👎", "👊", "👌", "💪", "👏", "🙌", "👐", "👋", "💋", "💘", "❤️", "💓", "💔", "💕", "💖", "💗", "💙", "💚", "💛", "💜", "🖤", "💝", "💞", "💟"];
 
+// Using Google Gemini API for natural chat simulation
 const callGeminiAI = async (targetUser: any, currentUser: any, history: Message[]) => {
-    // Vite 会在打包时搜索代码中的 process.env.API_KEY 并替换为实际的值
     const apiKey = process.env.API_KEY;
     
-    // 增加详细的校验和日志
     if (!apiKey || apiKey === "" || apiKey === "undefined") {
-        console.error("DEBUG: process.env.API_KEY is currently empty or undefined in the browser.");
-        return { text: "微信号异常 (API Key 未生效，请检查 Vercel 环境变量设置并 Redeploy)", sources: [] };
+        return { text: "配置未生效：请在环境变量中设置 API_KEY" };
     }
 
     try {
         const ai = new GoogleGenAI({ apiKey });
         const systemInstruction = `
-            You are ${targetUser.name} (WeChat ID: ${targetUser.wxid}) on a mobile messaging app called WeChat.
-            Your relationship to the user is: ${targetUser.remark || 'Friend/Contact'}.
-            Your personality/signature: "${targetUser.signature || 'Friendly and helpful'}".
+            你是微信上的 ${targetUser.name}。
+            你的性格/签名是: "${targetUser.signature || '一个友好的微信用户'}".
             
-            RULES:
-            1. Respond in Chinese (Simplified).
-            2. Keep responses CONCISE and MOBILE-FRIENDLY (1-2 short sentences). Use 1-2 emojis naturally.
-            3. Be human-like: use informal particle words like "哈", "呀", "了", "哈".
-            4. If the user sent a Red Packet or Transfer, say thanks and ask what it's for.
+            回复规则:
+            1. 使用简体中文。
+            2. 回复极其简短、口语化（1-2个短句），像真实的手机聊天。
+            3. 适当使用 1-2 个表情符号。
+            4. 语气自然。
         `;
 
-        const chatContext = history.slice(-5).map(m => {
-            const role = m.senderId === currentUser.id ? 'user' : 'model';
-            return `${role === 'user' ? currentUser.name : targetUser.name}: ${m.content}`;
-        }).join('\n');
+        const contents = history.slice(-5).map(m => ({
+            role: m.senderId === currentUser.id ? "user" : "model",
+            parts: [{ text: m.content }]
+        }));
 
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: `Context history:\n${chatContext}\n\nLast message from ${currentUser.name}: "${history[history.length-1].content}"`,
+            model: "gemini-3-flash-preview",
+            contents: contents,
             config: {
-                systemInstruction,
-                temperature: 0.9,
-            },
+                systemInstruction: systemInstruction,
+                temperature: 1.0
+            }
         });
-        
-        return { text: response.text || "...", sources: [] };
+
+        return { text: response.text || "..." };
     } catch (error) {
-        console.error("Gemini API Error:", error);
-        return { text: "网络好像有点断断续续的...", sources: [] };
+        console.error("Gemini AI Error:", error);
+        return { text: "对方忙碌中..." };
     }
 };
 
@@ -127,49 +126,25 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                if (lastProcessedMsgId.current === lastMsg.id) return;
                lastProcessedMsgId.current = lastMsg.id;
 
-               if (lastMsg.type === 'red_packet' || lastMsg.type === 'transfer') {
-                    const tMoney = setTimeout(() => {
-                        updateMessage(lastMsg.id, { status: lastMsg.type === 'red_packet' ? 'opened' : 'accepted' });
-                        addMessage({
-                            id: `sys_ai_money_${Date.now()}`,
-                            senderId: 'system',
-                            receiverId: id,
-                            content: lastMsg.type === 'red_packet' ? `${targetName}领取了你的红包` : `对方已收款`,
-                            type: 'system',
-                            timestamp: Date.now(),
-                            read: true
-                        });
-                        
-                        const tReply = setTimeout(async () => {
-                            const { text } = await callGeminiAI(targetUser, currentUser, history);
-                            addMessage({ id: `rep_ai_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
-                        }, 1000);
-                        activeTimers.current.push(tReply);
-                    }, 2000);
-                    activeTimers.current.push(tMoney);
-                    return;
-               }
+               // AI 自动回复逻辑
+               const t1 = setTimeout(() => setIsTyping(true), 1000);
+               activeTimers.current.push(t1);
 
-               if (lastMsg.type === 'text' || lastMsg.type === 'audio') {
-                   const t1 = setTimeout(() => setIsTyping(true), 800);
-                   activeTimers.current.push(t1);
-
-                   const triggerAI = async () => {
-                        const { text } = await callGeminiAI(targetUser, currentUser, history);
-                        const typingTime = Math.min(2500, Math.max(1000, text.length * 100));
-                        const t2 = setTimeout(() => {
-                            setIsTyping(false);
-                            addMessage({ id: `rep_ai_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
-                        }, typingTime);
-                        activeTimers.current.push(t2);
-                   };
-                   triggerAI();
-               }
+               const triggerAI = async () => {
+                    const { text } = await callGeminiAI(targetUser, currentUser, history);
+                    const typingTime = Math.min(2000, Math.max(800, text.length * 80));
+                    const t2 = setTimeout(() => {
+                        setIsTyping(false);
+                        addMessage({ id: `rep_ai_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
+                    }, typingTime);
+                    activeTimers.current.push(t2);
+               };
+               triggerAI();
            } else {
              setIsTyping(false);
            }
       }
-  }, [history, chatType, currentUser.id, id, targetUser, targetName, addMessage, updateMessage]);
+  }, [history, chatType, currentUser.id, id, targetUser, targetName, addMessage]);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -177,10 +152,6 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
     setInputText('');
     setShowEmoji(false);
     setShowPlusMenu(false);
-  };
-
-  const handleSendAudio = (text: string) => {
-    addMessage({ id: Date.now().toString(), senderId: currentUser.id, receiverId: id, content: text, type: 'audio', timestamp: Date.now(), read: false, duration: 4 });
   };
 
   const playAudio = (text: string) => {

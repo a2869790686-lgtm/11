@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
@@ -60,7 +61,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return (localStorage.getItem('wx_language') as 'en' | 'zh') || 'zh';
   });
 
-  const [friends, setFriends] = useState<User[]>(() => {
+  const [friendsList, setFriendsList] = useState<User[]>(() => {
     const saved = localStorage.getItem('wx_friends');
     return saved ? JSON.parse(saved) : INITIAL_FRIENDS;
   });
@@ -73,11 +74,6 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('wx_messages');
     return saved ? JSON.parse(saved) : MOCK_MESSAGES;
-  });
-
-  const [friendsList, setFriendsList] = useState<User[]>(() => {
-    const saved = localStorage.getItem('wx_friends');
-    return saved ? JSON.parse(saved) : INITIAL_FRIENDS;
   });
 
   const [posts, setPosts] = useState<Post[]>(() => {
@@ -106,46 +102,65 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return () => clearTimeout(t);
   }, []);
 
+  // Migrated from DeepSeek to Google Gemini API with responseSchema
   const fillPrefetchPool = async () => {
     if (isPrefetching.current || friendsList.length === 0) return;
     
     const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined' || apiKey === '') {
-      console.warn("AI Prefetch skipped: API_KEY is missing.");
-      return;
-    }
+    if (!apiKey || apiKey === 'undefined' || apiKey === '') return;
 
     isPrefetching.current = true;
     try {
       const ai = new GoogleGenAI({ apiKey });
-      const prompt = `生成3条极其真实的中国版微信朋友圈动态。数组返回：[{"text":"...", "imgCount": 0-9}, ...]`;
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: { responseMimeType: "application/json" }
+          model: "gemini-3-flash-preview",
+          contents: "生成3条真实的中国微信朋友圈动态文本。要求：口语化。返回JSON格式。",
+          config: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                  type: Type.OBJECT,
+                  properties: {
+                      posts: {
+                          type: Type.ARRAY,
+                          items: {
+                              type: Type.OBJECT,
+                              properties: {
+                                  text: { type: Type.STRING },
+                                  imgCount: { type: Type.INTEGER }
+                              },
+                              required: ["text", "imgCount"]
+                          }
+                      }
+                  },
+                  required: ["posts"]
+              }
+          }
       });
-      const results = JSON.parse(response.text || "[]");
+      
+      const data = JSON.parse(response.text || "{}");
+      const results = data.posts || [];
       if (Array.isArray(results)) {
         results.forEach(res => {
           prefetchPool.current.push({ ...res, authorId: friendsList[Math.floor(Math.random() * friendsList.length)].id });
         });
       }
     } catch (e) {
-      console.warn("Prefetch Failed", e);
+      console.warn("Gemini Prefetch Failed", e);
     } finally {
       isPrefetching.current = false;
     }
   };
 
+  // Migrated from DeepSeek to Google Gemini API
   const simulateFeedback = useCallback(async (postId: string, content: string) => {
     const apiKey = process.env.API_KEY;
-    const interactionCount = 3 + Math.floor(Math.random() * 5);
+    const interactionCount = 3 + Math.floor(Math.random() * 4);
     const availableFriends = [...friendsList].sort(() => Math.random() - 0.5);
 
     for (let i = 0; i < interactionCount; i++) {
       const friend = availableFriends[i];
       if (!friend) break;
-      const delay = 2000 + Math.random() * 13000;
+      const delay = 3000 + Math.random() * 10000;
       
       setTimeout(async () => {
         const isLike = Math.random() > 0.4;
@@ -165,9 +180,11 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
           if (!apiKey || apiKey === 'undefined') return;
           try {
             const ai = new GoogleGenAI({ apiKey });
-            const prompt = `你是"${friend.name}"。你的朋友刚刚发了朋友圈："${content}"。请写一条极其真实且简短的微信评论。如果是长辈就发鼓励，如果是年轻人就发玩梗或吐槽。极短（10字以内）。`;
-            const response = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
-            const commentText = response.text?.trim() || "赞！";
+            const response = await ai.models.generateContent({
+                model: "gemini-3-flash-preview",
+                contents: `你是"${friend.name}"。你的朋友发了朋友圈："${content}"。请写一条微信评论。极简短（10字内）。直接返回评论内容。`,
+            });
+            const commentText = (response.text || "赞！").trim();
             const newComment: Comment = { id: `c_ai_${Date.now()}`, userId: friend.id, userName: friend.remark || friend.name, content: commentText, timestamp: Date.now() };
             setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
             setNotifications(prev => [{
@@ -181,7 +198,9 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
               timestamp: Date.now(),
               read: false
             }, ...prev]);
-          } catch (e) {}
+          } catch (e) {
+            console.error("Gemini AI Feedback Error:", e);
+          }
         }
       }, delay);
     }
