@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
@@ -14,65 +15,47 @@ interface ChatDetailProps {
 const EMOJIS = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😙", "😚", "🙂", "🤗", "🤔", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "🤑", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰", "😱", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "😇", "🤠", "🤠", "🤡", "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "👿", "👹", "👺", "💀", "👻", "👽", "🤖", "💩", "🙏", "👍", "👎", "👊", "👌", "💪", "👏", "🙌", "👐", "👋", "💋", "💘", "❤️", "💓", "💔", "💕", "💖", "💗", "💙", "💚", "💛", "💜", "🖤", "💝", "💞", "💟"];
 
 /**
- * 核心修复：直接使用 fetch 调用 API，确保兼容您的 DeepSeek 密钥
- * 如果您使用的是 Gemini 密钥，请将 URL 换回 Gemini 接口
+ * DeepSeek 对话驱动函数
  */
-const callAIResponse = async (targetUser: any, currentUser: any, history: Message[]) => {
-    // 优先读取注入的环境变量，Vercel 部署后会自动生效
+const callDeepSeekAI = async (targetUser: any, currentUser: any, history: Message[]) => {
     const apiKey = process.env.API_KEY;
     
     if (!apiKey || apiKey === "" || apiKey === "undefined") {
-        return { text: "配置未生效：请在 Vercel 设置 API_KEY 并 Redeploy" };
+        return { text: "配置未生效：请在 Vercel 设置 API_KEY (sk-开头) 并重新部署" };
     }
 
     try {
-        // 构建微信特色的 Prompt
-        const systemPrompt = `你现在是微信用户 "${targetUser.name}"。
-        你的性格特征是: "${targetUser.signature || '一个普通的微信好友'}"。
-        规则：
-        1. 必须使用中文回复。
-        2. 语气要极其口语化，像在手机上打字，不要说长篇大论。
-        3. 每次回复控制在 1-2 句话内。
-        4. 适当使用表情符号（如 [呲牙], [好的], 😊）。
-        5. 如果对方发红包或转账，你要表示感谢并礼貌收下。`;
-
-        const messages = [
-            { role: "system", content: systemPrompt },
-            ...history.slice(-5).map(m => ({
-                role: m.senderId === currentUser.id ? "user" : "assistant",
-                content: m.content
-            }))
-        ];
-
-        // 自动识别密钥类型并选择接口
-        const isDeepSeek = apiKey.startsWith('sk-');
-        const apiUrl = isDeepSeek ? "https://api.deepseek.com/chat/completions" : "https://api.openai.com/v1/chat/completions";
-        const modelName = isDeepSeek ? "deepseek-chat" : "gpt-3.5-turbo";
-
-        const response = await fetch(apiUrl, {
+        const response = await fetch("https://api.deepseek.com/chat/completions", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: modelName,
-                messages: messages,
-                temperature: 0.7
+                model: "deepseek-chat",
+                messages: [
+                    {
+                        role: "system",
+                        content: `你现在是微信好友"${targetUser.name}"。你的签名是"${targetUser.signature || '生活很简单'}"。请用极其简短、口语化的中文回复我，就像在手机上发微信一样。适当使用表情符号，不要表现得像个AI机器人。`
+                    },
+                    ...history.slice(-6).map(m => ({
+                        role: m.senderId === currentUser.id ? "user" : "assistant",
+                        content: m.content
+                    }))
+                ],
+                temperature: 0.8,
+                max_tokens: 150
             })
         });
 
         const data = await response.json();
-        
-        if (data.error) {
-            console.error("API Error:", data.error);
-            return { text: "对方信号不太好，稍后再试吧~" };
+        if (data.choices && data.choices[0]) {
+            return { text: data.choices[0].message.content };
         }
-
-        return { text: data.choices[0].message.content };
+        return { text: "对方忙碌中..." };
     } catch (error) {
-        console.error("Network Error:", error);
-        return { text: "网络好像有点断断续续的..." };
+        console.error("DeepSeek Error:", error);
+        return { text: "网络信号不太好..." };
     }
 };
 
@@ -108,7 +91,6 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
     };
   }, [id]);
 
-  // 微信红包/转账点击逻辑
   const handleMoneyClick = useCallback((msg: Message) => {
       if (msg.senderId === currentUser.id) return;
       if (msg.status === 'accepted' || msg.status === 'opened') return;
@@ -138,7 +120,6 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
       }
   }, [currentUser.id, id, targetName, updateMessage, addMessage]);
 
-  // AI 自动回复驱动
   useEffect(() => {
       if (chatType === 'user' && history.length > 0) {
            const lastMsg = history[history.length - 1];
@@ -146,14 +127,12 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                if (lastProcessedMsgId.current === lastMsg.id) return;
                lastProcessedMsgId.current = lastMsg.id;
 
-               // 显示“对方正在输入...”
-               const t1 = setTimeout(() => setIsTyping(true), 1200);
+               const t1 = setTimeout(() => setIsTyping(true), 1000);
                activeTimers.current.push(t1);
 
                const triggerAI = async () => {
-                    const { text } = await callAIResponse(targetUser, currentUser, history);
-                    // 根据文字长度模拟输入时间
-                    const typingTime = Math.min(3000, Math.max(1000, text.length * 150));
+                    const { text } = await callDeepSeekAI(targetUser, currentUser, history);
+                    const typingTime = Math.min(2500, Math.max(800, text.length * 100));
                     const t2 = setTimeout(() => {
                         setIsTyping(false);
                         addMessage({ 
@@ -189,8 +168,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
       const content = msg.type === 'text' ? (
           <div className={`px-3 py-2 text-[15px] rounded-md shadow-sm break-words relative max-w-full ${isMe ? 'bg-wechat-bubble text-black' : 'bg-white text-black'}`}>
             <div className="whitespace-pre-wrap">{msg.content}</div>
-            {/* 还原微信气泡小三角 */}
-            <div className={`absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ${isMe ? 'border-l-[6px] border-l-wechat-bubble -right-[5px]' : 'border-r-[6px] border-r-white -left-[5px]'}`} />
+            <div className={`absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ${isMe ? 'border-l-[6px] border-l-wechat-bubble -right-[4.5px]' : 'border-r-[6px] border-r-white -left-[4.5px]'}`} />
           </div>
       ) : msg.type === 'red_packet' ? (
           <div 
@@ -242,23 +220,23 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
           if (msg.type === 'system') return <div key={msg.id}>{renderMessageContent(msg, false)}</div>;
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-start mb-4`}>
-              {!isMe && <img src={sender?.avatar} className="w-10 h-10 rounded-md mr-2 cursor-pointer bg-gray-200" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: msg.senderId })} />}
+              {!isMe && <img src={sender?.avatar} className="w-10 h-10 rounded-md mr-2 cursor-pointer bg-gray-200 shadow-sm" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: msg.senderId })} />}
               <div className={`max-w-[75%] relative flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 {chatType === 'group' && !isMe && <span className="text-xs text-gray-400 mb-1 ml-1">{sender?.name}</span>}
                 {renderMessageContent(msg, isMe)}
               </div>
-              {isMe && <img src={currentUser.avatar} className="w-10 h-10 rounded-md ml-2 cursor-pointer bg-gray-200" onClick={() => onNavigate({ type: 'MY_PROFILE' })} />}
+              {isMe && <img src={currentUser.avatar} className="w-10 h-10 rounded-md ml-2 cursor-pointer bg-gray-200 shadow-sm" onClick={() => onNavigate({ type: 'MY_PROFILE' })} />}
             </div>
           );
         })}
         {isTyping && (
              <div className="flex justify-start items-start mb-4">
-                <img src={targetUser?.avatar} className="w-10 h-10 rounded-md mr-2 bg-gray-200" />
+                <img src={targetUser?.avatar} className="w-10 h-10 rounded-md mr-2 bg-gray-200 shadow-sm" />
                 <div className="bg-white px-3 py-2 rounded-md shadow-sm flex items-center space-x-1 h-9 relative">
                     <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
                     <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                    <div className="absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-white -left-[5px]" />
+                    <div className="absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-white -left-[4.5px]" />
                 </div>
              </div>
         )}
@@ -268,16 +246,16 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
         <div className="p-2 flex items-center gap-2">
             <button onClick={() => setIsAudioMode(!isAudioMode)} className="text-gray-600 p-1">{isAudioMode ? <IconKeyboard /> : <IconVoice />}</button>
             {isAudioMode ? (
-                <button className="flex-1 bg-white border border-gray-300 rounded-md py-2 text-center font-medium active:bg-gray-200">{t('hold_to_talk')}</button>
+                <button className="flex-1 bg-white border border-gray-300 rounded-md py-2 text-center font-medium active:bg-gray-200">按住 说话</button>
             ) : (
                 <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} className="flex-1 bg-white border border-gray-200 rounded-md px-3 py-2 text-base outline-none focus:border-green-500" />
             )}
             <button onClick={() => { setShowEmoji(!showEmoji); setShowPlusMenu(false); }} className="p-1"><IconFace /></button>
-            {inputText ? <button onClick={handleSend} className="bg-wechat-green text-white px-3 py-1.5 rounded-md text-sm">{t('send')}</button> : <button onClick={() => { setShowPlusMenu(!showPlusMenu); setShowEmoji(false); }} className="p-1"><IconPlus /></button>}
+            {inputText ? <button onClick={handleSend} className="bg-wechat-green text-white px-3 py-1.5 rounded-md text-sm">发送</button> : <button onClick={() => { setShowPlusMenu(!showPlusMenu); setShowEmoji(false); }} className="p-1"><IconPlus /></button>}
         </div>
-        {showEmoji && <div className="h-[250px] bg-[#EDEDED] border-t border-[#DCDCDC] overflow-y-auto grid grid-cols-8 gap-2 p-4">{EMOJIS.map((e, i) => <button key={i} onClick={() => setInputText(p => p+e)} className="text-2xl hover:bg-white rounded">{e}</button>)}</div>}
+        {showEmoji && <div className="h-[250px] bg-[#EDEDED] border-t border-[#DCDCDC] overflow-y-auto grid grid-cols-8 gap-2 p-4">{EMOJIS.map((e, i) => <button key={i} onClick={() => setInputText(p => p+e)} className="text-2xl hover:bg-white rounded transition-colors">{e}</button>)}</div>}
         {showPlusMenu && (
-             <div className="h-[250px] bg-[#EDEDED] border-t border-[#DCDCDC] p-6">
+             <div className="h-[250px] bg-[#EDEDED] border-t border-[#DCDCDC] p-6 animate-slide-up">
                  <div className="grid grid-cols-4 gap-6">
                      <div onClick={() => onNavigate({ type: 'MONEY_RED_PACKET', userId: id })} className="flex flex-col items-center gap-2 cursor-pointer"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-50"><IconRedPacket /></div><span className="text-xs text-gray-500">红包</span></div>
                      <div onClick={() => onNavigate({ type: 'MONEY_TRANSFER', userId: id })} className="flex flex-col items-center gap-2 cursor-pointer"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-50"><IconTransfer /></div><span className="text-xs text-gray-500">转账</span></div>

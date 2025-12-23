@@ -2,24 +2,14 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
-import { GoogleGenAI, Type } from "@google/genai";
 
 const LOCAL_MOMENTS_POOL = [
-  { text: "下班！明天又是元气满满（个鬼）的一天。", imgCount: 1 },
-  { text: "。 。 。", imgCount: 0 },
-  { text: "服了，真的服了。", imgCount: 0 },
-  { text: "好想喝奶茶啊啊啊啊啊啊", imgCount: 0 },
-  { text: "今日份的打工记录：心率平稳，只想辞职。", imgCount: 1 },
-  { text: "终于周五了！！！！！", imgCount: 0 },
-  { text: "想念老家的晚霞了。", imgCount: 2 },
-  { text: "尊嘟假嘟？O.o", imgCount: 0 },
-  { text: "早八，我恨。", imgCount: 1 },
-  { text: "有些事，看淡了也就那样吧", imgCount: 1 },
-  { text: "又是想去旅游的一天。", imgCount: 3 },
-  { text: "没救了，这个世界。", imgCount: 0 },
-  { text: "今天的云好漂亮！☁️", imgCount: 1 },
-  { text: "拼个饭，有无？", imgCount: 0 },
-  { text: "网速慢得想撞墙...", imgCount: 0 }
+  { text: "今天天气真不错，适合出去走走。", imgCount: 1 },
+  { text: "周一，努力打工中...", imgCount: 0 },
+  { text: "终于下班了，累得不行。", imgCount: 0 },
+  { text: "推荐大家去这家店，味道超级棒！", imgCount: 1 },
+  { text: "有些事，看淡了也就那样了。", imgCount: 1 },
+  { text: "生活需要一点仪式感。☕", imgCount: 2 }
 ];
 
 interface StoreContextType {
@@ -102,7 +92,6 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return () => clearTimeout(t);
   }, []);
 
-  // Migrated from DeepSeek to Google Gemini API with responseSchema
   const fillPrefetchPool = async () => {
     if (isPrefetching.current || friendsList.length === 0) return;
     
@@ -111,56 +100,45 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
     isPrefetching.current = true;
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: "生成3条真实的中国微信朋友圈动态文本。要求：口语化。返回JSON格式。",
-          config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                  type: Type.OBJECT,
-                  properties: {
-                      posts: {
-                          type: Type.ARRAY,
-                          items: {
-                              type: Type.OBJECT,
-                              properties: {
-                                  text: { type: Type.STRING },
-                                  imgCount: { type: Type.INTEGER }
-                              },
-                              required: ["text", "imgCount"]
-                          }
-                      }
-                  },
-                  required: ["posts"]
-              }
-          }
+      const response = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [{
+                  role: "user",
+                  content: "生成3条中国微信朋友圈动态。口语化，包含生活感悟、职场、美食或旅行。返回JSON格式: { \"posts\": [ { \"text\": \"...\", \"imgCount\": 0-3 } ] }"
+              }],
+              response_format: { type: "json_object" }
+          })
       });
       
-      const data = JSON.parse(response.text || "{}");
-      const results = data.posts || [];
+      const data = await response.json();
+      const results = JSON.parse(data.choices[0].message.content).posts || [];
       if (Array.isArray(results)) {
         results.forEach(res => {
           prefetchPool.current.push({ ...res, authorId: friendsList[Math.floor(Math.random() * friendsList.length)].id });
         });
       }
     } catch (e) {
-      console.warn("Gemini Prefetch Failed", e);
+      console.warn("DeepSeek Prefetch Failed", e);
     } finally {
       isPrefetching.current = false;
     }
   };
 
-  // Migrated from DeepSeek to Google Gemini API
   const simulateFeedback = useCallback(async (postId: string, content: string) => {
     const apiKey = process.env.API_KEY;
-    const interactionCount = 3 + Math.floor(Math.random() * 4);
+    const interactionCount = 2 + Math.floor(Math.random() * 3);
     const availableFriends = [...friendsList].sort(() => Math.random() - 0.5);
 
     for (let i = 0; i < interactionCount; i++) {
       const friend = availableFriends[i];
       if (!friend) break;
-      const delay = 3000 + Math.random() * 10000;
+      const delay = 4000 + Math.random() * 8000;
       
       setTimeout(async () => {
         const isLike = Math.random() > 0.4;
@@ -177,14 +155,24 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
             read: false
           }, ...prev]);
         } else {
-          if (!apiKey || apiKey === 'undefined') return;
+          if (!apiKey || apiKey === 'undefined' || apiKey === '') return;
           try {
-            const ai = new GoogleGenAI({ apiKey });
-            const response = await ai.models.generateContent({
-                model: "gemini-3-flash-preview",
-                contents: `你是"${friend.name}"。你的朋友发了朋友圈："${content}"。请写一条微信评论。极简短（10字内）。直接返回评论内容。`,
+            const response = await fetch("https://api.deepseek.com/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "deepseek-chat",
+                    messages: [{
+                        role: "user",
+                        content: `你是"${friend.name}"。看到好友发了这条朋友圈："${content}"。请写一条微信评论。极简短（10字内），口语化。直接返回内容。`
+                    }]
+                })
             });
-            const commentText = (response.text || "赞！").trim();
+            const data = await response.json();
+            const commentText = data.choices[0].message.content.trim();
             const newComment: Comment = { id: `c_ai_${Date.now()}`, userId: friend.id, userName: friend.remark || friend.name, content: commentText, timestamp: Date.now() };
             setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
             setNotifications(prev => [{
@@ -199,7 +187,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
               read: false
             }, ...prev]);
           } catch (e) {
-            console.error("Gemini AI Feedback Error:", e);
+            console.error("AI Comment Error:", e);
           }
         }
       }, delay);
