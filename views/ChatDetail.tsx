@@ -1,12 +1,9 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
 import { Header } from '../components/Layout';
 import { IconVoice, IconKeyboard, IconMore, IconPlus, IconFace, IconRedPacket, IconTransfer, IconCamera } from '../components/Icons';
-import { GoogleGenAI } from "@google/genai";
 
-// Define the missing ChatDetailProps interface
 interface ChatDetailProps {
   id: string;
   chatType: 'user' | 'group';
@@ -16,45 +13,66 @@ interface ChatDetailProps {
 
 const EMOJIS = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗", "😙", "😚", "🙂", "🤗", "🤔", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "🤑", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰", "😱", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "😇", "🤠", "🤠", "🤡", "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "👿", "👹", "👺", "💀", "👻", "👽", "🤖", "💩", "🙏", "👍", "👎", "👊", "👌", "💪", "👏", "🙌", "👐", "👋", "💋", "💘", "❤️", "💓", "💔", "💕", "💖", "💗", "💙", "💚", "💛", "💜", "🖤", "💝", "💞", "💟"];
 
-// Using Google Gemini API for natural chat simulation
-const callGeminiAI = async (targetUser: any, currentUser: any, history: Message[]) => {
+/**
+ * 核心修复：直接使用 fetch 调用 API，确保兼容您的 DeepSeek 密钥
+ * 如果您使用的是 Gemini 密钥，请将 URL 换回 Gemini 接口
+ */
+const callAIResponse = async (targetUser: any, currentUser: any, history: Message[]) => {
+    // 优先读取注入的环境变量，Vercel 部署后会自动生效
     const apiKey = process.env.API_KEY;
     
     if (!apiKey || apiKey === "" || apiKey === "undefined") {
-        return { text: "配置未生效：请在环境变量中设置 API_KEY" };
+        return { text: "配置未生效：请在 Vercel 设置 API_KEY 并 Redeploy" };
     }
 
     try {
-        const ai = new GoogleGenAI({ apiKey });
-        const systemInstruction = `
-            你是微信上的 ${targetUser.name}。
-            你的性格/签名是: "${targetUser.signature || '一个友好的微信用户'}".
-            
-            回复规则:
-            1. 使用简体中文。
-            2. 回复极其简短、口语化（1-2个短句），像真实的手机聊天。
-            3. 适当使用 1-2 个表情符号。
-            4. 语气自然。
-        `;
+        // 构建微信特色的 Prompt
+        const systemPrompt = `你现在是微信用户 "${targetUser.name}"。
+        你的性格特征是: "${targetUser.signature || '一个普通的微信好友'}"。
+        规则：
+        1. 必须使用中文回复。
+        2. 语气要极其口语化，像在手机上打字，不要说长篇大论。
+        3. 每次回复控制在 1-2 句话内。
+        4. 适当使用表情符号（如 [呲牙], [好的], 😊）。
+        5. 如果对方发红包或转账，你要表示感谢并礼貌收下。`;
 
-        const contents = history.slice(-5).map(m => ({
-            role: m.senderId === currentUser.id ? "user" : "model",
-            parts: [{ text: m.content }]
-        }));
+        const messages = [
+            { role: "system", content: systemPrompt },
+            ...history.slice(-5).map(m => ({
+                role: m.senderId === currentUser.id ? "user" : "assistant",
+                content: m.content
+            }))
+        ];
 
-        const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
-            contents: contents,
-            config: {
-                systemInstruction: systemInstruction,
-                temperature: 1.0
-            }
+        // 自动识别密钥类型并选择接口
+        const isDeepSeek = apiKey.startsWith('sk-');
+        const apiUrl = isDeepSeek ? "https://api.deepseek.com/chat/completions" : "https://api.openai.com/v1/chat/completions";
+        const modelName = isDeepSeek ? "deepseek-chat" : "gpt-3.5-turbo";
+
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: modelName,
+                messages: messages,
+                temperature: 0.7
+            })
         });
 
-        return { text: response.text || "..." };
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error("API Error:", data.error);
+            return { text: "对方信号不太好，稍后再试吧~" };
+        }
+
+        return { text: data.choices[0].message.content };
     } catch (error) {
-        console.error("Gemini AI Error:", error);
-        return { text: "对方忙碌中..." };
+        console.error("Network Error:", error);
+        return { text: "网络好像有点断断续续的..." };
     }
 };
 
@@ -90,6 +108,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
     };
   }, [id]);
 
+  // 微信红包/转账点击逻辑
   const handleMoneyClick = useCallback((msg: Message) => {
       if (msg.senderId === currentUser.id) return;
       if (msg.status === 'accepted' || msg.status === 'opened') return;
@@ -119,6 +138,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
       }
   }, [currentUser.id, id, targetName, updateMessage, addMessage]);
 
+  // AI 自动回复驱动
   useEffect(() => {
       if (chatType === 'user' && history.length > 0) {
            const lastMsg = history[history.length - 1];
@@ -126,16 +146,25 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                if (lastProcessedMsgId.current === lastMsg.id) return;
                lastProcessedMsgId.current = lastMsg.id;
 
-               // AI 自动回复逻辑
-               const t1 = setTimeout(() => setIsTyping(true), 1000);
+               // 显示“对方正在输入...”
+               const t1 = setTimeout(() => setIsTyping(true), 1200);
                activeTimers.current.push(t1);
 
                const triggerAI = async () => {
-                    const { text } = await callGeminiAI(targetUser, currentUser, history);
-                    const typingTime = Math.min(2000, Math.max(800, text.length * 80));
+                    const { text } = await callAIResponse(targetUser, currentUser, history);
+                    // 根据文字长度模拟输入时间
+                    const typingTime = Math.min(3000, Math.max(1000, text.length * 150));
                     const t2 = setTimeout(() => {
                         setIsTyping(false);
-                        addMessage({ id: `rep_ai_${Date.now()}`, senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
+                        addMessage({ 
+                            id: `rep_ai_${Date.now()}`, 
+                            senderId: id, 
+                            receiverId: currentUser.id, 
+                            content: text, 
+                            type: 'text', 
+                            timestamp: Date.now(), 
+                            read: false 
+                        });
                     }, typingTime);
                     activeTimers.current.push(t2);
                };
@@ -154,24 +183,15 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
     setShowPlusMenu(false);
   };
 
-  const playAudio = (text: string) => {
-    if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-  };
-
   const renderMessageContent = (msg: Message, isMe: boolean) => {
       if (msg.type === 'system') return <div className="flex justify-center w-full my-2"><span className="bg-[#DADADA] text-white text-[11px] px-2 py-0.5 rounded-sm">{msg.content}</span></div>;
       
       const content = msg.type === 'text' ? (
-          <div className={`px-3 py-2 text-[15px] rounded-md shadow-sm break-words relative max-w-full ${isMe ? 'bg-wechat-bubble text-black rounded-tr-none' : 'bg-white text-black rounded-tl-none'}`}>
+          <div className={`px-3 py-2 text-[15px] rounded-md shadow-sm break-words relative max-w-full ${isMe ? 'bg-wechat-bubble text-black' : 'bg-white text-black'}`}>
             <div className="whitespace-pre-wrap">{msg.content}</div>
+            {/* 还原微信气泡小三角 */}
             <div className={`absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ${isMe ? 'border-l-[6px] border-l-wechat-bubble -right-[5px]' : 'border-r-[6px] border-r-white -left-[5px]'}`} />
           </div>
-      ) : msg.type === 'audio' ? (
-        <div onClick={() => playAudio(msg.content)} className={`px-3 py-2 rounded-md shadow-sm cursor-pointer flex items-center min-w-[80px] select-none ${isMe ? 'bg-wechat-bubble justify-end rounded-tr-none' : 'bg-white justify-start rounded-tl-none'}`} style={{ width: `${60 + (msg.duration || 1) * 10}px` }}>
-            <span className={isMe ? 'mr-2 text-sm' : 'ml-2 text-sm'}>{msg.duration}"</span>
-             <svg className={`w-4 h-4 ${isMe ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-             <div className={`absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent ${isMe ? 'border-l-[6px] border-l-wechat-bubble -right-[5px]' : 'border-r-[6px] border-r-white -left-[5px]'}`} />
-        </div>
       ) : msg.type === 'red_packet' ? (
           <div 
             onClick={() => handleMoneyClick(msg)}
@@ -208,11 +228,13 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
       return content;
   };
 
-  if (!targetName) return null;
-
   return (
     <div className="flex flex-col h-full bg-wechat-bg">
-      <Header title={targetName} onBack={onBack} rightAction={<div onClick={() => onNavigate({ type: 'CHAT_INFO', id, chatType })} className="cursor-pointer p-2"><IconMore /></div>} />
+      <Header 
+        title={isTyping ? "对方正在输入..." : targetName} 
+        onBack={onBack} 
+        rightAction={<div onClick={() => onNavigate({ type: 'CHAT_INFO', id, chatType })} className="cursor-pointer p-2"><IconMore /></div>} 
+      />
       <div className="flex-1 overflow-y-auto p-4 no-scrollbar pb-[env(safe-area-inset-bottom)]" ref={scrollRef}>
         {history.map(msg => {
           const isMe = msg.senderId === currentUser.id;
@@ -220,22 +242,23 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
           if (msg.type === 'system') return <div key={msg.id}>{renderMessageContent(msg, false)}</div>;
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-start mb-4`}>
-              {!isMe && <img src={sender?.avatar} className="w-10 h-10 rounded-md mr-2 cursor-pointer bg-gray-300" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: msg.senderId })} />}
+              {!isMe && <img src={sender?.avatar} className="w-10 h-10 rounded-md mr-2 cursor-pointer bg-gray-200" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: msg.senderId })} />}
               <div className={`max-w-[75%] relative flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 {chatType === 'group' && !isMe && <span className="text-xs text-gray-400 mb-1 ml-1">{sender?.name}</span>}
                 {renderMessageContent(msg, isMe)}
               </div>
-              {isMe && <img src={currentUser.avatar} className="w-10 h-10 rounded-md ml-2 cursor-pointer bg-gray-300" onClick={() => onNavigate({ type: 'MY_PROFILE' })} />}
+              {isMe && <img src={currentUser.avatar} className="w-10 h-10 rounded-md ml-2 cursor-pointer bg-gray-200" onClick={() => onNavigate({ type: 'MY_PROFILE' })} />}
             </div>
           );
         })}
         {isTyping && (
-             <div className="flex justify-start items-start mb-4 animate-pulse">
-                <img src={targetUser?.avatar} className="w-10 h-10 rounded-md mr-2 bg-gray-300" />
-                <div className="bg-white text-gray-400 px-3 py-2 rounded-md rounded-tl-none shadow-sm flex items-center space-x-1 h-10">
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+             <div className="flex justify-start items-start mb-4">
+                <img src={targetUser?.avatar} className="w-10 h-10 rounded-md mr-2 bg-gray-200" />
+                <div className="bg-white px-3 py-2 rounded-md shadow-sm flex items-center space-x-1 h-9 relative">
+                    <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-white -left-[5px]" />
                 </div>
              </div>
         )}

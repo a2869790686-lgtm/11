@@ -5,8 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   define: {
-    // 强制将编译环境中的 API_KEY 注入到浏览器端的 process.env.API_KEY
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || ""),
+    // 关键修复：确保不管是本地 .env 还是 Vercel 后台设置的 API_KEY 都能被正确读取
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || process.env.VITE_API_KEY || ""),
   },
   build: {
     chunkSizeWarningLimit: 1000,
