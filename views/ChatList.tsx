@@ -27,8 +27,8 @@ export const ChatList = ({ onNavigate }: ChatListProps) => {
   const { getChatSessions, t } = useStore();
   const sessions = getChatSessions();
 
-  // 模拟置顶：ID为 3, 8, g1 的设为置顶背景色
-  const stickyIds = ['3', '8', 'g1'];
+  // 模拟置顶角色
+  const stickyIds = ['charlie_su', '3', '8', 'g1'];
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -57,7 +57,7 @@ export const ChatList = ({ onNavigate }: ChatListProps) => {
                 <div className="relative shrink-0">
                   <img src={session.avatar} alt={session.name} className="w-12 h-12 rounded-lg object-cover bg-gray-200" />
                   {session.unreadCount > 0 && (
-                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 border border-white">
+                    <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 border border-white">
                       {session.unreadCount > 99 ? '99+' : session.unreadCount}
                     </div>
                   )}
@@ -65,14 +65,14 @@ export const ChatList = ({ onNavigate }: ChatListProps) => {
                 
                 <div className="ml-3 flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-0.5">
-                    <h3 className="text-base font-medium text-black truncate">{session.name}</h3>
+                    <h3 className="text-[16px] font-medium text-black truncate">{session.name}</h3>
                     {session.lastMessage && (
-                      <span className="text-[10px] text-gray-400 ml-2 whitespace-nowrap">
+                      <span className="text-[11px] text-gray-400 ml-2 whitespace-nowrap">
                         {formatTime(session.lastMessage.timestamp)}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-400 truncate">
+                  <p className="text-sm text-gray-400 truncate leading-tight">
                     {session.lastMessage 
                       ? (session.lastMessage.type === 'audio' ? '[语音消息]' : 
                          session.lastMessage.type === 'red_packet' ? '[微信红包]' : 
@@ -85,7 +85,9 @@ export const ChatList = ({ onNavigate }: ChatListProps) => {
             );
           })
         )}
-        <div className="py-10 text-center text-gray-300 text-xs">已加载全部消息</div>
+        <div className="py-12 text-center text-gray-300 text-xs tracking-widest uppercase">
+          {sessions.length > 8 ? "微信 (WeChat)" : "已加载全部消息"}
+        </div>
       </ScrollArea>
     </div>
   );
