@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode, useRef } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_GROUPS, TRANSLATIONS, GENERATE_INITIAL_MESSAGES } from '../constants';
-import { GoogleGenAI } from "@google/genai";
 
 const MALE_LEADS = ['charlie_su', 'sariel_qi', 'osborn_xiao', 'evan_lu', 'jesse_xia'];
 
@@ -73,24 +72,35 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const callAi = async (persona: string, userInput: string, context: string) => {
     const apiKey = process.env.API_KEY; 
     if (!apiKey || apiKey === 'undefined') return "（对方正在输入中...）";
+    
     try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `你正在微信聊天中扮演一个角色。
-你的设定：${persona}
-背景信息：${context}
-当前对话：对方说“${userInput}”
-要求：极其口语化，像真人回复，不要包含任何AI助手的迹象。字数限制在25字以内。回复必须符合中国大陆社交习惯。`,
-        config: {
-          temperature: 0.95,
-          topP: 0.95,
-          topK: 64,
-        }
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "system",
+              content: `你正在微信聊天中扮演一个角色。\n你的设定：${persona}\n背景信息：${context}\n要求：极其口语化，像真人回复，不要包含任何AI助手的迹象。字数限制在25字以内。回复必须符合中国大陆社交习惯。`
+            },
+            {
+              role: "user",
+              content: userInput
+            }
+          ],
+          temperature: 1.2,
+          max_tokens: 100
+        })
       });
-      return response.text?.trim() || "嗯？";
+
+      const data = await response.json();
+      return data.choices[0].message.content.trim() || "嗯？";
     } catch (e) { 
-      console.error("Gemini API Error:", e);
+      console.error("DeepSeek API Error:", e);
       return "（信号不稳定...）"; 
     }
   };
