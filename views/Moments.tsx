@@ -43,6 +43,12 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
         setIsPublishing(false);
     }
     
+    const triggerRefresh = async () => {
+        setIsRefreshing(true);
+        await refreshMoments();
+        setIsRefreshing(false);
+    };
+
     useEffect(() => {
         if (commentingPostId && inputRef.current) {
             inputRef.current.focus();
@@ -81,10 +87,8 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
     const handleTouchEnd = async () => {
         isDragging.current = false;
         if (pullY > 60) {
-            setIsRefreshing(true);
             setPullY(80); 
-            await refreshMoments();
-            setIsRefreshing(false);
+            await triggerRefresh();
             setPullY(0);
         } else {
             setPullY(0);
@@ -101,7 +105,10 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                 <button onClick={onBack} className="flex items-center -ml-2 drop-shadow-md pointer-events-auto active:opacity-60">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
-                <div className="flex gap-4 pointer-events-auto">
+                <div className="flex items-center gap-4 pointer-events-auto">
+                    <button onClick={triggerRefresh} className={`drop-shadow-md active:opacity-60 ${isRefreshing ? 'animate-spin' : ''}`}>
+                        <IconRefresh />
+                    </button>
                     <button onClick={handleOpenNotifications} className="drop-shadow-md relative active:opacity-60">
                         <IconBell />
                         {unreadNotifications.length > 0 && (
@@ -126,9 +133,9 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                             <div className="flex flex-col">
                                 {notifications.map(notif => (
                                     <div key={notif.id} className="p-4 bg-white border-b border-gray-100 flex items-start active:bg-gray-50 transition-colors">
-                                        <img src={notif.userAvatar} className="w-10 h-10 rounded-md mr-3 object-cover shadow-sm" />
+                                        <img src={notif.userAvatar} className="w-10 h-10 rounded-md mr-3 object-cover shadow-sm cursor-pointer" onClick={() => { setShowNotifications(false); onNavigate({ type: 'USER_PROFILE', userId: notif.userId }); }} />
                                         <div className="flex-1">
-                                            <span className="text-[#576B95] font-bold text-sm block">{notif.userName}</span>
+                                            <span className="text-[#576B95] font-bold text-sm block cursor-pointer" onClick={() => { setShowNotifications(false); onNavigate({ type: 'USER_PROFILE', userId: notif.userId }); }}>{notif.userName}</span>
                                             {notif.type === 'like' ? (
                                                 <p className="text-gray-600 text-sm mt-0.5">赞了你的动态 ❤️</p>
                                             ) : (
@@ -170,7 +177,11 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                          if (!author) return null;
                          return (
                              <div key={post.id} className="flex px-4 py-4 border-b border-gray-100 animate-fade-in">
-                                 <img src={author.avatar} className="w-10 h-10 rounded-md mr-3 cursor-pointer object-cover shadow-sm" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: post.authorId })} />
+                                 <img 
+                                    src={author.avatar} 
+                                    className="w-10 h-10 rounded-md mr-3 cursor-pointer object-cover shadow-sm active:opacity-60" 
+                                    onClick={() => onNavigate({ type: 'USER_PROFILE', userId: post.authorId })} 
+                                />
                                  <div className="flex-1">
                                      <h4 className="text-[#576B95] font-bold text-base cursor-pointer hover:underline" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: post.authorId })}>{author.remark || author.name}</h4>
                                      <p className="text-base text-black mb-2 leading-relaxed whitespace-pre-wrap">{post.content}</p>
@@ -204,12 +215,12 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                                              {post.likes.length > 0 && (
                                                  <div className="flex flex-wrap items-center text-[#576B95] mb-1 pb-1 border-b border-gray-200/40 font-medium">
                                                      <span className="mr-1.5 text-gray-400 font-light">❤️</span>
-                                                     {post.likes.map((uid, i) => <span key={uid}>{getName(uid)}{i < post.likes.length - 1 && '，'}</span>)}
+                                                     {post.likes.map((uid, i) => <span key={uid} className="cursor-pointer hover:underline" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: uid })}>{getName(uid)}{i < post.likes.length - 1 && '，'}</span>)}
                                                  </div>
                                              )}
                                              {post.comments.length > 0 && (
                                                  <div className="pt-0.5 space-y-0.5">
-                                                     {post.comments.map(c => <div key={c.id} className="active:bg-gray-200 rounded px-1 -mx-1"><span className="text-[#576B95] font-semibold">{c.userName}:</span><span className="text-black ml-1">{c.content}</span></div>)}
+                                                     {post.comments.map(c => <div key={c.id} className="active:bg-gray-200 rounded px-1 -mx-1"><span className="text-[#576B95] font-semibold cursor-pointer hover:underline" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: c.userId })}>{c.userName}:</span><span className="text-black ml-1">{c.content}</span></div>)}
                                                  </div>
                                              )}
                                          </div>
@@ -243,8 +254,6 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
 export const UserMoments = ({ userId, onBack }: { userId: string, onBack: () => void }) => {
     const { posts, getUser, currentUser } = useStore();
     const user = getUser(userId);
-    
-    // 关键修正：这里的逻辑应该能正确过滤出该用户的所有动态
     const userPosts = posts.filter(p => p.authorId === userId).sort((a,b) => b.timestamp - a.timestamp);
 
     if (!user) return null;
