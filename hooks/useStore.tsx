@@ -75,15 +75,20 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   useEffect(() => localStorage.setItem('wx_posts', JSON.stringify(posts)), [posts]);
   useEffect(() => localStorage.setItem('wx_notifications', JSON.stringify(notifications)), [notifications]);
 
-  // --- 朋友圈反馈引擎：男主全员必定互动 ---
-  const simulateMaleLeadFeedback = useCallback(async (postId: string, postContent: string) => {
+  // --- 真实互动算法：有间隔的点赞和评论 ---
+  const simulateOrganicFeedback = useCallback(async (postId: string, postContent: string) => {
     const apiKey = process.env.API_KEY;
     
-    for (const leadId of MALE_LEADS) {
+    // 1. 男主们有间隔地互动
+    MALE_LEADS.forEach((leadId, index) => {
         const lead = friendsList.find(f => f.id === leadId);
-        if (!lead) continue;
+        if (!lead) return;
 
-        // 1. 延迟点赞 (模拟浏览时间)
+        // 随机延迟：5s 到 45s 之间，且每个人有间隔
+        const likeDelay = 2000 + (index * 5000) + Math.random() * 5000;
+        const commentDelay = likeDelay + 8000 + Math.random() * 10000;
+
+        // 执行点赞
         setTimeout(() => {
             setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: [...new Set([...p.likes, leadId])] } : p));
             setNotifications(prev => [{
@@ -96,17 +101,17 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                 timestamp: Date.now(),
                 read: false
             }, ...prev]);
-        }, 1000 + Math.random() * 2000);
+        }, likeDelay);
 
-        // 2. 延迟评论 (模拟打字时间)
+        // 执行评论 (如果有API KEY)
         if (apiKey && apiKey !== 'undefined') {
             setTimeout(async () => {
                 const leadPrompts: Record<string, string> = {
-                    charlie_su: "你是查理苏，自恋华丽的医生，称玩家为未婚妻。",
-                    sariel_qi: "你是齐司礼，高冷毒舌的设计师，称玩家为笨鸟。",
-                    osborn_xiao: "你是萧逸，不羁帅气的赛车手，称玩家为小朋友。",
-                    evan_lu: "你是陆沉，优雅腹黑的CEO，称玩家为我的女孩。",
-                    jesse_xia: "你是夏鸣星，阳光活力的爱豆，称玩家为大小姐。"
+                    charlie_su: "你是查理苏。自恋自信，称呼玩家为未婚妻。",
+                    sariel_qi: "你是齐司礼。高冷毒舌，称呼玩家为笨鸟。",
+                    osborn_xiao: "你是萧逸。酷帅不羁，称呼玩家为小朋友。",
+                    evan_lu: "你是陆沉。优雅深情，称呼玩家为我的女孩。",
+                    jesse_xia: "你是夏鸣星。元气阳光，称呼玩家为大小姐。"
                 };
 
                 try {
@@ -116,8 +121,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                         body: JSON.stringify({
                             model: "deepseek-chat",
                             messages: [
-                                { role: "system", content: leadPrompts[leadId] + " 请根据玩家的朋友圈内容，回一条15字以内的极简评论，一定要带上专属称呼。" },
-                                { role: "user", content: postContent }
+                                { role: "system", content: leadPrompts[leadId] + "请对朋友圈发一条15字以内的评论，语气要符合人设。" },
+                                { role: "user", content: `朋友圈内容: ${postContent}` }
                             ]
                         })
                     });
@@ -137,20 +142,85 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                         timestamp: Date.now(),
                         read: false
                     }, ...prev]);
-                } catch (e) {
-                    console.error("Male Lead Reply Error:", e);
-                }
-            }, 4000 + Math.random() * 5000);
+                } catch (e) { console.error(e); }
+            }, commentDelay);
         }
+    });
+
+    // 2. 普通好友随机凑热闹 (20%概率)
+    const normalFriends = friendsList.filter(f => !MALE_LEADS.includes(f.id));
+    normalFriends.forEach(f => {
+        if (Math.random() < 0.15) {
+            setTimeout(() => {
+                setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: [...new Set([...p.likes, f.id])] } : p));
+            }, 15000 + Math.random() * 60000);
+        }
+    });
+  }, [friendsList]);
+
+  // --- 刷新朋友圈：自动生成好友动态 ---
+  const refreshMoments = useCallback(async () => {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined') {
+        await new Promise(r => setTimeout(r, 1000));
+        return;
+    }
+
+    // 随机选一个男主发朋友圈
+    const luckyLeadId = MALE_LEADS[Math.floor(Math.random() * MALE_LEADS.length)];
+    const lead = friendsList.find(f => f.id === luckyLeadId);
+    if (!lead) return;
+
+    try {
+        const leadThemes: Record<string, string> = {
+            charlie_su: "医学研究、奢华生活、对完美事物的赞美",
+            sariel_qi: "大自然景观、设计草图、冷淡的职场观察",
+            osborn_xiao: "赛车轰鸣、深夜的城市街头、一份路边摊小吃",
+            evan_lu: "古籍阅读、深夜的办公室灯光、一杯红茶",
+            jesse_xia: "排练厅的汗水、童年的回忆、给粉丝的感谢"
+        };
+
+        const response = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: "deepseek-chat",
+                messages: [
+                    { role: "system", content: `你是微信好友"${lead.name}"。请发一条朋友圈动态文案。主题关于：${leadThemes[luckyLeadId]}。字数20字左右，不要带表情。` }
+                ]
+            })
+        });
+        const data = await response.json();
+        const content = data.choices[0].message.content.trim().replace(/^"|"$/g, '');
+
+        const newPost: Post = {
+            id: `p_refresh_${Date.now()}`,
+            authorId: luckyLeadId,
+            content: content,
+            images: [`https://loremflickr.com/400/300/luxury,city?lock=${Date.now() % 100}`],
+            likes: [],
+            comments: [],
+            timestamp: Date.now()
+        };
+
+        setPosts(prev => [newPost, ...prev]);
+        // 男主互赞动态 (体现他们也互相认识)
+        setTimeout(() => {
+            const otherLead = MALE_LEADS.find(id => id !== luckyLeadId);
+            if(otherLead) setPosts(prev => prev.map(p => p.id === newPost.id ? { ...p, likes: [otherLead] } : p));
+        }, 5000);
+
+    } catch (e) {
+        console.error("Refresh Moments Error:", e);
     }
   }, [friendsList]);
 
   const addPost = useCallback((content: string, images: string[]) => {
-    const newPostId = `p_${Date.now()}`;
+    const newPostId = `p_me_${Date.now()}`;
     const newPost: Post = { id: newPostId, authorId: currentUser.id, content, images, likes: [], comments: [], timestamp: Date.now() };
     setPosts(prev => [newPost, ...prev]);
-    simulateMaleLeadFeedback(newPostId, content);
-  }, [currentUser.id, simulateMaleLeadFeedback]);
+    simulateOrganicFeedback(newPostId, content);
+  }, [currentUser.id, simulateOrganicFeedback]);
 
   const updateCurrentUser = (updates: Partial<User>) => setCurrentUser(prev => ({ ...prev, ...updates }));
   const addMessage = useCallback((msg: Message) => setMessages(prev => [msg, ...prev]), []);
@@ -169,10 +239,6 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const deleteFriend = (id: string) => setFriendsList(prev => prev.filter(f => f.id !== id));
   const updateFriendRemark = (id: string, remark: string) => setFriendsList(prev => prev.map(f => f.id === id ? { ...f, remark } : f));
 
-  const refreshMoments = useCallback(async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }, []);
-
   const toggleLike = (postId: string) => setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: p.likes.includes(currentUser.id) ? p.likes.filter(id => id !== currentUser.id) : [...p.likes, currentUser.id] } : p));
   const addComment = (postId: string, content: string) => {
     const newComment: Comment = { id: `c_${Date.now()}`, userId: currentUser.id, userName: currentUser.name, content, timestamp: Date.now() };
@@ -186,16 +252,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
   const getChatSessions = useCallback(() => {
     const sessions: Record<string, ChatSession> = {};
-    
-    // 强制确保所有 INITIAL_FRIENDS 出现在列表里
-    friendsList.forEach(f => {
-        sessions[f.id] = { id: f.id, type: 'user', name: f.remark || f.name, avatar: f.avatar, lastMessage: null, unreadCount: 0 };
-    });
-    
-    // 强制确保群聊在列表里
-    groups.forEach(g => {
-        sessions[g.id] = { id: g.id, type: 'group', name: g.name, avatar: g.avatar, lastMessage: null, unreadCount: 0 };
-    });
+    friendsList.forEach(f => { sessions[f.id] = { id: f.id, type: 'user', name: f.remark || f.name, avatar: f.avatar, lastMessage: null, unreadCount: 0 }; });
+    groups.forEach(g => { sessions[g.id] = { id: g.id, type: 'group', name: g.name, avatar: g.avatar, lastMessage: null, unreadCount: 0 }; });
 
     messages.forEach(msg => {
       let sessionId = groups.find(g => g.id === msg.receiverId)?.id || (msg.senderId === currentUser.id ? msg.receiverId : msg.senderId);
@@ -207,11 +265,9 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     });
 
     return Object.values(sessions).sort((a, b) => {
-        // 置顶逻辑：MALE_LEADS 始终排在最前
         const aLead = MALE_LEADS.includes(a.id) ? 1 : 0;
         const bLead = MALE_LEADS.includes(b.id) ? 1 : 0;
         if (aLead !== bLead) return bLead - aLead;
-        
         return (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0);
     });
   }, [messages, friendsList, groups, currentUser.id]);

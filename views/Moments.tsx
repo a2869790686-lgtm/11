@@ -62,15 +62,6 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
         markNotificationsAsRead();
     };
 
-    const handleRefresh = async () => {
-        if (isRefreshing) return;
-        setIsRefreshing(true);
-        setPullY(80); 
-        await refreshMoments();
-        setIsRefreshing(false);
-        setPullY(0);
-    };
-
     const handleTouchStart = (e: React.TouchEvent) => {
         if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0) {
             startY.current = e.touches[0].clientY;
@@ -106,13 +97,11 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
 
     return (
         <div className="flex flex-col h-full bg-white relative overflow-hidden">
-             {/* Header Navigation */}
              <div className="absolute top-0 left-0 right-0 h-16 z-50 flex items-center px-4 justify-between bg-transparent text-white pointer-events-none">
                 <button onClick={onBack} className="flex items-center -ml-2 drop-shadow-md pointer-events-auto active:opacity-60">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <div className="flex gap-4 pointer-events-auto">
-                    {/* 互动消息提醒 */}
                     <button onClick={handleOpenNotifications} className="drop-shadow-md relative active:opacity-60">
                         <IconBell />
                         {unreadNotifications.length > 0 && (
@@ -121,16 +110,12 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                             </div>
                         )}
                     </button>
-                    <button onClick={handleRefresh} className={`drop-shadow-md transition-transform duration-500 active:opacity-60 ${isRefreshing ? 'animate-spin' : ''}`}>
-                        <IconRefresh />
-                    </button>
                     <button onClick={() => setIsPublishing(true)} className="drop-shadow-md active:opacity-60">
                         <IconCamera />
                     </button>
                 </div>
              </div>
              
-             {/* 互动消息抽屉/弹窗 */}
              {showNotifications && (
                 <div className="absolute inset-0 z-[60] bg-black/80 flex justify-end" onClick={() => setShowNotifications(false)}>
                     <div className="w-80 bg-[#EDEDED] h-full overflow-y-auto shadow-2xl animate-fade-in-left" onClick={e => e.stopPropagation()}>
@@ -157,7 +142,6 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                                 ))}
                             </div>
                         )}
-                        <div className="py-10 text-center text-gray-400 text-xs">仅显示最近互动记录</div>
                     </div>
                 </div>
              )}
@@ -173,7 +157,6 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                 onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
              >
                  <div className="relative mb-12">
-                     {/* 固定一个漂亮的封面，增强代入感 */}
                      <img src="https://images.unsplash.com/photo-1542224566-6e85f2e6772f?auto=format&fit=crop&w=800&q=80" className="w-full h-72 object-cover" />
                      <div className="absolute -bottom-10 right-4 flex items-end">
                          <span className="text-white font-bold text-lg mb-12 mr-4 drop-shadow-md z-30">{currentUser.name}</span>
@@ -182,11 +165,11 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                  </div>
 
                  <div className="pb-10 mt-4">
-                     {posts.map(post => {
+                     {posts.sort((a,b) => b.timestamp - a.timestamp).map(post => {
                          const author = post.authorId === currentUser.id ? currentUser : friends.find(f => f.id === post.authorId);
                          if (!author) return null;
                          return (
-                             <div key={post.id} className="flex px-4 py-4 border-b border-gray-100">
+                             <div key={post.id} className="flex px-4 py-4 border-b border-gray-100 animate-fade-in">
                                  <img src={author.avatar} className="w-10 h-10 rounded-md mr-3 cursor-pointer object-cover shadow-sm" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: post.authorId })} />
                                  <div className="flex-1">
                                      <h4 className="text-[#576B95] font-bold text-base cursor-pointer hover:underline" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: post.authorId })}>{author.remark || author.name}</h4>
@@ -194,7 +177,7 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                                      {post.images.length > 0 && (
                                          <div className={`grid gap-1 mb-2 ${post.images.length === 1 ? 'grid-cols-1 max-w-[220px]' : (post.images.length === 4 ? 'grid-cols-2 max-w-[240px]' : 'grid-cols-3 max-w-[300px]')}`}>
                                              {post.images.map((img, idx) => (
-                                                 <img key={idx} src={img} className={`object-cover bg-gray-50 border border-gray-100 ${post.images.length === 1 ? 'w-full h-auto rounded-sm' : 'aspect-square rounded-sm'}`} loading="lazy" />
+                                                 <img key={idx} src={img} className={`object-cover bg-gray-50 border border-gray-100 aspect-square rounded-sm`} loading="lazy" />
                                              ))}
                                          </div>
                                      )}
@@ -257,11 +240,12 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
     )
 }
 
-// ... UserMoments 和 PublishView 保持不变
 export const UserMoments = ({ userId, onBack }: { userId: string, onBack: () => void }) => {
-    const { posts, getUser } = useStore();
+    const { posts, getUser, currentUser } = useStore();
     const user = getUser(userId);
-    const userPosts = posts.filter(p => p.authorId === userId);
+    
+    // 关键修正：这里的逻辑应该能正确过滤出该用户的所有动态
+    const userPosts = posts.filter(p => p.authorId === userId).sort((a,b) => b.timestamp - a.timestamp);
 
     if (!user) return null;
 
