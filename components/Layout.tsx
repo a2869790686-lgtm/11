@@ -37,10 +37,12 @@ export const Header = ({
   );
 };
 
-export const ScrollArea = ({ children, className = '' }: { children?: React.ReactNode, className?: string }) => {
+// Fix: Use React.forwardRef and React.HTMLAttributes<HTMLDivElement> to support 
+// additional props like ref, onScroll, onTouchStart, etc.
+export const ScrollArea = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ children, className = '', ...props }, ref) => {
   return (
-    <div className={`flex-1 overflow-y-auto no-scrollbar ${className}`}>
+    <div ref={ref} className={`flex-1 overflow-y-auto no-scrollbar ${className}`} {...props}>
       {children}
     </div>
   );
-};
+});

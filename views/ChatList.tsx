@@ -38,33 +38,42 @@ export const ChatList = ({ onNavigate }: { onNavigate: (view: ViewState) => void
             <div 
               key={session.id}
               onClick={() => onNavigate({ type: 'CHAT_DETAIL', id: session.id, chatType: session.type })}
-              className={`flex items-center px-4 py-3 border-b border-wechat-divider cursor-pointer active:bg-gray-200 transition-colors ${isSticky ? 'bg-[#F7F7F7]' : 'bg-white'}`}
+              className={`flex items-center px-4 py-3 border-b border-wechat-divider cursor-pointer active:bg-gray-100 transition-colors ${isSticky ? 'bg-[#F7F7F7]' : 'bg-white'}`}
             >
               <div className="relative shrink-0">
-                <img src={session.avatar} className="w-12 h-12 rounded-lg object-cover bg-gray-200" />
+                <img 
+                    src={session.avatar} 
+                    className="w-12 h-12 rounded-lg object-cover bg-gray-200 shadow-sm" 
+                    onClick={(e) => { 
+                        e.stopPropagation(); 
+                        onNavigate({ type: 'USER_PROFILE', userId: session.id }); 
+                    }}
+                />
                 {session.unreadCount > 0 && (
-                  <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-white">
+                  <div className="absolute -top-1.5 -right-1.5 bg-[#FA5151] text-white text-[11px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-white px-1">
                     {session.unreadCount > 99 ? '99+' : session.unreadCount}
                   </div>
                 )}
               </div>
               <div className="ml-3 flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-0.5">
-                  <h3 className="text-[16px] font-medium text-black truncate">{session.name}</h3>
+                  <h3 className="text-[16px] font-medium text-black truncate" onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigate({ type: 'USER_PROFILE', userId: session.id });
+                  }}>{session.name}</h3>
                   <span className="text-[11px] text-gray-400 ml-2 whitespace-nowrap">
                     {session.lastMessage ? formatTime(session.lastMessage.timestamp) : ''}
                   </span>
                 </div>
                 <p className="text-sm text-gray-400 truncate leading-tight">
-                    {session.lastMessage?.content || ''}
+                    {session.lastMessage?.content || (isSticky ? '对方已有新的朋友圈动态' : '你可以开始聊天了')}
                 </p>
               </div>
             </div>
           );
         })}
-        {/* 底部占位 */}
         <div className="py-12 text-center text-gray-300 text-xs tracking-widest bg-white">
-          {sessions.length > 20 ? "微信 (WeChat)" : "已加载全部消息"}
+          已加载全部消息
         </div>
       </ScrollArea>
     </div>
