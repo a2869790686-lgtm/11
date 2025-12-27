@@ -5,30 +5,21 @@ import { ViewState } from '../types';
 import { ScrollArea } from '../components/Layout';
 import { IconPlus, IconSearchDiscover } from '../components/Icons';
 
-interface ChatListProps {
-  onNavigate: (view: ViewState) => void;
-}
+const MALE_LEADS = ['charlie_su', 'sariel_qi', 'osborn_xiao', 'evan_lu', 'jesse_xia'];
 
 const formatTime = (ts: number) => {
   const date = new Date(ts);
   const now = new Date();
-  if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-  }
+  if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) {
-    return '昨天';
-  }
+  if (date.toDateString() === yesterday.toDateString()) return '昨天';
   return date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
 };
 
-export const ChatList = ({ onNavigate }: ChatListProps) => {
+export const ChatList = ({ onNavigate }: { onNavigate: (view: ViewState) => void }) => {
   const { getChatSessions, t } = useStore();
   const sessions = getChatSessions();
-
-  // 模拟置顶角色
-  const stickyIds = ['charlie_su', '3', '8', 'g1'];
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -41,52 +32,39 @@ export const ChatList = ({ onNavigate }: ChatListProps) => {
       </div>
       
       <ScrollArea className="bg-white">
-        {sessions.length === 0 ? (
-          <div className="p-8 text-center text-gray-400 mt-20">
-            暂无消息
-          </div>
-        ) : (
-          sessions.map(session => {
-            const isSticky = stickyIds.includes(session.id);
-            return (
-              <div 
-                key={session.id}
-                onClick={() => onNavigate({ type: 'CHAT_DETAIL', id: session.id, chatType: session.type })}
-                className={`flex items-center px-4 py-3 border-b border-wechat-divider cursor-pointer active:bg-gray-200 transition-colors ${isSticky ? 'bg-[#F7F7F7]' : 'bg-white'}`}
-              >
-                <div className="relative shrink-0">
-                  <img src={session.avatar} alt={session.name} className="w-12 h-12 rounded-lg object-cover bg-gray-200" />
-                  {session.unreadCount > 0 && (
-                    <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-1 border border-white">
-                      {session.unreadCount > 99 ? '99+' : session.unreadCount}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="ml-3 flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-0.5">
-                    <h3 className="text-[16px] font-medium text-black truncate">{session.name}</h3>
-                    {session.lastMessage && (
-                      <span className="text-[11px] text-gray-400 ml-2 whitespace-nowrap">
-                        {formatTime(session.lastMessage.timestamp)}
-                      </span>
-                    )}
+        {sessions.map(session => {
+          const isSticky = MALE_LEADS.includes(session.id);
+          return (
+            <div 
+              key={session.id}
+              onClick={() => onNavigate({ type: 'CHAT_DETAIL', id: session.id, chatType: session.type })}
+              className={`flex items-center px-4 py-3 border-b border-wechat-divider cursor-pointer active:bg-gray-200 transition-colors ${isSticky ? 'bg-[#F7F7F7]' : 'bg-white'}`}
+            >
+              <div className="relative shrink-0">
+                <img src={session.avatar} className="w-12 h-12 rounded-lg object-cover bg-gray-200" />
+                {session.unreadCount > 0 && (
+                  <div className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold min-w-[18px] h-[18px] flex items-center justify-center rounded-full border border-white">
+                    {session.unreadCount > 99 ? '99+' : session.unreadCount}
                   </div>
-                  <p className="text-sm text-gray-400 truncate leading-tight">
-                    {session.lastMessage 
-                      ? (session.lastMessage.type === 'audio' ? '[语音消息]' : 
-                         session.lastMessage.type === 'red_packet' ? '[微信红包]' : 
-                         session.lastMessage.type === 'transfer' ? '[微信转账]' :
-                         session.lastMessage.content) 
-                      : ''}
-                  </p>
-                </div>
+                )}
               </div>
-            );
-          })
-        )}
-        <div className="py-12 text-center text-gray-300 text-xs tracking-widest uppercase">
-          {sessions.length > 8 ? "微信 (WeChat)" : "已加载全部消息"}
+              <div className="ml-3 flex-1 min-w-0">
+                <div className="flex justify-between items-baseline mb-0.5">
+                  <h3 className="text-[16px] font-medium text-black truncate">{session.name}</h3>
+                  <span className="text-[11px] text-gray-400 ml-2 whitespace-nowrap">
+                    {session.lastMessage ? formatTime(session.lastMessage.timestamp) : ''}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-400 truncate leading-tight">
+                    {session.lastMessage?.content || ''}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+        {/* 底部占位 */}
+        <div className="py-12 text-center text-gray-300 text-xs tracking-widest bg-white">
+          {sessions.length > 20 ? "微信 (WeChat)" : "已加载全部消息"}
         </div>
       </ScrollArea>
     </div>

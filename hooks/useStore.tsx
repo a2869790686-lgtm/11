@@ -1,14 +1,9 @@
 
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode, useRef } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_MESSAGES, MOCK_GROUPS, TRANSLATIONS } from '../constants';
 
-const CHARLIE_POSTS = [
-  "今天在直升机上俯瞰这座城市，除了我，没人能配得上这份完美。未婚妻，你也这么觉得吧？",
-  "作为一名顶级医生，追求极致的完美缝合是我的使命。当然，如果你在身边，我的手可能会更稳一点。",
-  "又是被查理苏的魅力所惊艳的一天。未婚妻，不用害羞，你可以直接赞美这件旷世奇作。",
-  "如果这个世界上有除了查理苏之外的奇迹，那一定是你，未婚妻。😊"
-];
+const MALE_LEADS = ['charlie_su', 'sariel_qi', 'osborn_xiao', 'evan_lu', 'jesse_xia'];
 
 interface StoreContextType {
   currentUser: User;
@@ -74,89 +69,91 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const prefetchPool = useRef<{text: string, imgCount: number, authorId: string}[]>([]);
-  const isPrefetching = useRef(false);
-
   useEffect(() => localStorage.setItem('wx_current_user', JSON.stringify(currentUser)), [currentUser]);
   useEffect(() => localStorage.setItem('wx_friends', JSON.stringify(friendsList)), [friendsList]);
   useEffect(() => localStorage.setItem('wx_messages', JSON.stringify(messages)), [messages]);
   useEffect(() => localStorage.setItem('wx_posts', JSON.stringify(posts)), [posts]);
+  useEffect(() => localStorage.setItem('wx_notifications', JSON.stringify(notifications)), [notifications]);
 
-  useEffect(() => {
-    const t = setTimeout(() => fillPrefetchPool(), 3000);
-    return () => clearTimeout(t);
-  }, []);
-
-  const fillPrefetchPool = async () => {
-    if (isPrefetching.current || friendsList.length === 0) return;
+  // --- 朋友圈反馈引擎：男主全员必定互动 ---
+  const simulateMaleLeadFeedback = useCallback(async (postId: string, postContent: string) => {
     const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined' || apiKey === '') return;
+    
+    for (const leadId of MALE_LEADS) {
+        const lead = friendsList.find(f => f.id === leadId);
+        if (!lead) continue;
 
-    isPrefetching.current = true;
-    try {
-      // 偶尔生成查理苏动态
-      const isCharlieTurn = Math.random() > 0.6;
-      if (isCharlieTurn) {
-        prefetchPool.current.push({ 
-          text: CHARLIE_POSTS[Math.floor(Math.random() * CHARLIE_POSTS.length)], 
-          imgCount: 1, 
-          authorId: 'charlie_su' 
-        });
-      } else {
-        const response = await fetch("https://api.deepseek.com/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                model: "deepseek-chat",
-                messages: [{ role: "user", content: "生成1条写实的中文朋友圈动态。JSON: { \"posts\": [ { \"text\": \"...\", \"imgCount\": 0-3 } ] }" }],
-                response_format: { type: "json_object" }
-            })
-        });
-        const data = await response.json();
-        const results = JSON.parse(data.choices[0].message.content).posts || [];
-        results.forEach(res => {
-          prefetchPool.current.push({ ...res, authorId: friendsList[Math.floor(Math.random() * friendsList.length)].id });
-        });
-      }
-    } catch (e) {
-      console.warn("Prefetch Failed", e);
-    } finally {
-      isPrefetching.current = false;
+        // 1. 延迟点赞 (模拟浏览时间)
+        setTimeout(() => {
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: [...new Set([...p.likes, leadId])] } : p));
+            setNotifications(prev => [{
+                id: `notif_l_${Date.now()}_${leadId}`,
+                type: 'like',
+                userId: leadId,
+                userName: lead.name,
+                userAvatar: lead.avatar,
+                postId,
+                timestamp: Date.now(),
+                read: false
+            }, ...prev]);
+        }, 1000 + Math.random() * 2000);
+
+        // 2. 延迟评论 (模拟打字时间)
+        if (apiKey && apiKey !== 'undefined') {
+            setTimeout(async () => {
+                const leadPrompts: Record<string, string> = {
+                    charlie_su: "你是查理苏，自恋华丽的医生，称玩家为未婚妻。",
+                    sariel_qi: "你是齐司礼，高冷毒舌的设计师，称玩家为笨鸟。",
+                    osborn_xiao: "你是萧逸，不羁帅气的赛车手，称玩家为小朋友。",
+                    evan_lu: "你是陆沉，优雅腹黑的CEO，称玩家为我的女孩。",
+                    jesse_xia: "你是夏鸣星，阳光活力的爱豆，称玩家为大小姐。"
+                };
+
+                try {
+                    const response = await fetch("https://api.deepseek.com/chat/completions", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+                        body: JSON.stringify({
+                            model: "deepseek-chat",
+                            messages: [
+                                { role: "system", content: leadPrompts[leadId] + " 请根据玩家的朋友圈内容，回一条15字以内的极简评论，一定要带上专属称呼。" },
+                                { role: "user", content: postContent }
+                            ]
+                        })
+                    });
+                    const data = await response.json();
+                    const text = data.choices[0].message.content.trim().replace(/^"|"$/g, '');
+                    
+                    const newComment: Comment = { id: `c_ai_${Date.now()}_${leadId}`, userId: leadId, userName: lead.name, content: text, timestamp: Date.now() };
+                    setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
+                    setNotifications(prev => [{
+                        id: `notif_c_${Date.now()}_${leadId}`,
+                        type: 'comment',
+                        userId: leadId,
+                        userName: lead.name,
+                        userAvatar: lead.avatar,
+                        postId,
+                        content: text,
+                        timestamp: Date.now(),
+                        read: false
+                    }, ...prev]);
+                } catch (e) {
+                    console.error("Male Lead Reply Error:", e);
+                }
+            }, 4000 + Math.random() * 5000);
+        }
     }
-  };
-
-  const simulateFeedback = useCallback(async (postId: string, content: string) => {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined' || apiKey === '') return;
-    
-    // 强制查理苏在朋友圈互动
-    const friend = friendsList.find(f => f.id === 'charlie_su') || friendsList[0];
-    const delay = 6000 + Math.random() * 4000;
-    
-    setTimeout(async () => {
-      try {
-        const prompt = friend.id === 'charlie_su' 
-            ? `你是查理苏（《光与夜之恋》男主，称呼玩家为未婚妻，极其自信深情）。看到未婚妻发了："${content}"。请回复一条符合人设的极简评论。`
-            : `你是好友"${friend.name}"。看到好友发了："${content}"。请回一条微信风格评论。`;
-            
-        const response = await fetch("https://api.deepseek.com/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                model: "deepseek-chat",
-                messages: [{ role: "user", content: prompt }]
-            })
-        });
-        const data = await response.json();
-        const commentText = data.choices[0].message.content.trim();
-        const newComment: Comment = { id: `c_ai_${Date.now()}`, userId: friend.id, userName: friend.remark || friend.name, content: commentText, timestamp: Date.now() };
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
-      } catch (e) { console.error("AI Comment Error:", e); }
-    }, delay);
   }, [friendsList]);
 
+  const addPost = useCallback((content: string, images: string[]) => {
+    const newPostId = `p_${Date.now()}`;
+    const newPost: Post = { id: newPostId, authorId: currentUser.id, content, images, likes: [], comments: [], timestamp: Date.now() };
+    setPosts(prev => [newPost, ...prev]);
+    simulateMaleLeadFeedback(newPostId, content);
+  }, [currentUser.id, simulateMaleLeadFeedback]);
+
   const updateCurrentUser = (updates: Partial<User>) => setCurrentUser(prev => ({ ...prev, ...updates }));
-  const addMessage = useCallback((msg: Message) => setMessages(prev => [...prev, msg]), []);
+  const addMessage = useCallback((msg: Message) => setMessages(prev => [msg, ...prev]), []);
   const updateMessage = useCallback((id: string, updates: Partial<Message>) => setMessages(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m)), []);
   const markAsRead = useCallback((targetId: string) => {
     setMessages(prev => prev.map(m => (m.senderId === targetId && m.receiverId === currentUser.id && !m.read) ? { ...m, read: true } : m));
@@ -172,30 +169,9 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const deleteFriend = (id: string) => setFriendsList(prev => prev.filter(f => f.id !== id));
   const updateFriendRemark = (id: string, remark: string) => setFriendsList(prev => prev.map(f => f.id === id ? { ...f, remark } : f));
 
-  const addPost = useCallback((content: string, images: string[]) => {
-    const newPostId = `p_${Date.now()}`;
-    const newPost: Post = { id: newPostId, authorId: currentUser.id, content, images, likes: [], comments: [], timestamp: Date.now() };
-    setPosts(prev => [newPost, ...prev]);
-    simulateFeedback(newPostId, content);
-  }, [currentUser.id, simulateFeedback]);
-
   const refreshMoments = useCallback(async () => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    if (prefetchPool.current.length > 0) {
-      const sourceData = prefetchPool.current.shift()!;
-      const newPost: Post = {
-          id: `p_fast_${Date.now()}`,
-          authorId: sourceData.authorId,
-          content: sourceData.text,
-          images: sourceData.imgCount > 0 ? [`https://loremflickr.com/400/400?random=${Date.now()}`] : [],
-          likes: [],
-          comments: [],
-          timestamp: Date.now()
-      };
-      setPosts(prev => [newPost, ...prev]);
-    }
-    fillPrefetchPool();
-  }, [friendsList]);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }, []);
 
   const toggleLike = (postId: string) => setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: p.likes.includes(currentUser.id) ? p.likes.filter(id => id !== currentUser.id) : [...p.likes, currentUser.id] } : p));
   const addComment = (postId: string, content: string) => {
@@ -210,21 +186,34 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
   const getChatSessions = useCallback(() => {
     const sessions: Record<string, ChatSession> = {};
+    
+    // 强制确保所有 INITIAL_FRIENDS 出现在列表里
+    friendsList.forEach(f => {
+        sessions[f.id] = { id: f.id, type: 'user', name: f.remark || f.name, avatar: f.avatar, lastMessage: null, unreadCount: 0 };
+    });
+    
+    // 强制确保群聊在列表里
+    groups.forEach(g => {
+        sessions[g.id] = { id: g.id, type: 'group', name: g.name, avatar: g.avatar, lastMessage: null, unreadCount: 0 };
+    });
+
     messages.forEach(msg => {
       let sessionId = groups.find(g => g.id === msg.receiverId)?.id || (msg.senderId === currentUser.id ? msg.receiverId : msg.senderId);
-      const type = groups.find(g => g.id === sessionId) ? 'group' : 'user';
-      if (!sessions[sessionId]) {
-          const g = groups.find(g => g.id === sessionId);
-          const f = friendsList.find(f => f.id === sessionId);
-          if (g || f) sessions[sessionId] = { id: sessionId, type: type as any, name: g ? g.name : (f?.remark || f?.name || ''), avatar: g ? g.avatar : (f?.avatar || ''), lastMessage: null, unreadCount: 0 };
-      }
       const session = sessions[sessionId];
       if (session) {
           if (!session.lastMessage || msg.timestamp > session.lastMessage.timestamp) session.lastMessage = msg;
           if (!msg.read && ((session.type === 'user' && msg.receiverId === currentUser.id) || (session.type === 'group' && msg.senderId !== currentUser.id))) session.unreadCount++;
       }
     });
-    return Object.values(sessions).sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0));
+
+    return Object.values(sessions).sort((a, b) => {
+        // 置顶逻辑：MALE_LEADS 始终排在最前
+        const aLead = MALE_LEADS.includes(a.id) ? 1 : 0;
+        const bLead = MALE_LEADS.includes(b.id) ? 1 : 0;
+        if (aLead !== bLead) return bLead - aLead;
+        
+        return (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0);
+    });
   }, [messages, friendsList, groups, currentUser.id]);
 
   const getUser = useCallback((id: string) => id === currentUser.id ? currentUser : friendsList.find(u => u.id === id), [friendsList, currentUser]);
@@ -235,7 +224,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       currentUser, friends: friendsList, groups, messages, posts, notifications, language, setLanguage,
       updateCurrentUser, addMessage, updateMessage, markAsRead, addFriend,
       deleteFriend, updateFriendRemark, addPost, refreshMoments, toggleLike, addComment,
-      markNotificationsAsRead: () => {}, getChatHistory, getChatSessions, getUser, t
+      markNotificationsAsRead: () => setNotifications(prev => prev.map(n => ({...n, read: true}))), 
+      getChatHistory, getChatSessions, getUser, t
     }}>
       {children}
     </StoreContext.Provider>
