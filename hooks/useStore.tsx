@@ -75,43 +75,43 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   useEffect(() => localStorage.setItem('wx_posts', JSON.stringify(posts)), [posts]);
   useEffect(() => localStorage.setItem('wx_notifications', JSON.stringify(notifications)), [notifications]);
 
-  // --- 真实互动算法：有间隔的点赞和评论 ---
+  // --- 拟人化互动算法 ---
   const simulateOrganicFeedback = useCallback(async (postId: string, postContent: string) => {
     const apiKey = process.env.API_KEY;
     
-    // 1. 男主们有间隔地互动
-    MALE_LEADS.forEach((leadId, index) => {
-        const lead = friendsList.find(f => f.id === leadId);
-        if (!lead) return;
+    friendsList.forEach((f, index) => {
+        const isLead = MALE_LEADS.includes(f.id);
+        const prob = isLead ? 0.95 : 0.15; // 男主几乎必点赞，普通人偶发
 
-        // 随机延迟：5s 到 45s 之间，且每个人有间隔
-        const likeDelay = 2000 + (index * 5000) + Math.random() * 5000;
-        const commentDelay = likeDelay + 8000 + Math.random() * 10000;
+        if (Math.random() > prob) return;
 
-        // 执行点赞
+        // 延迟时间分布在 10s 到 120s 之间
+        const delay = 10000 + (Math.random() * 110000);
+
         setTimeout(() => {
-            setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: [...new Set([...p.likes, leadId])] } : p));
+            setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: [...new Set([...p.likes, f.id])] } : p));
             setNotifications(prev => [{
-                id: `notif_l_${Date.now()}_${leadId}`,
+                id: `notif_l_${Date.now()}_${f.id}`,
                 type: 'like',
-                userId: leadId,
-                userName: lead.name,
-                userAvatar: lead.avatar,
+                userId: f.id,
+                userName: f.name,
+                userAvatar: f.avatar,
                 postId,
                 timestamp: Date.now(),
                 read: false
             }, ...prev]);
-        }, likeDelay);
+        }, delay);
 
-        // 执行评论 (如果有API KEY)
-        if (apiKey && apiKey !== 'undefined') {
+        // 如果有API KEY且是男主，尝试写一段更有趣的评论
+        if (apiKey && apiKey !== 'undefined' && isLead) {
+            const commentDelay = delay + 15000 + Math.random() * 30000;
             setTimeout(async () => {
                 const leadPrompts: Record<string, string> = {
-                    charlie_su: "你是查理苏。自恋自信，称呼玩家为未婚妻。",
-                    sariel_qi: "你是齐司礼。高冷毒舌，称呼玩家为笨鸟。",
-                    osborn_xiao: "你是萧逸。酷帅不羁，称呼玩家为小朋友。",
-                    evan_lu: "你是陆沉。优雅深情，称呼玩家为我的女孩。",
-                    jesse_xia: "你是夏鸣星。元气阳光，称呼玩家为大小姐。"
+                    charlie_su: "你是查理苏。自恋自信，称呼玩家为未婚妻。经常谈论旷世奇作。",
+                    sariel_qi: "你是齐司礼。高冷毒舌，称呼玩家为笨鸟。内心其实很关切。",
+                    osborn_xiao: "你是萧逸。酷帅不羁，称呼玩家为小朋友。喜欢说带她去飙车。",
+                    evan_lu: "你是陆沉。优雅腹黑，称呼玩家为我的女孩。",
+                    jesse_xia: "你是夏鸣星。元气阳光，称呼玩家为大小姐。常怀念童年。"
                 };
 
                 try {
@@ -121,7 +121,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                         body: JSON.stringify({
                             model: "deepseek-chat",
                             messages: [
-                                { role: "system", content: leadPrompts[leadId] + "请对朋友圈发一条15字以内的评论，语气要符合人设。" },
+                                { role: "system", content: leadPrompts[f.id] + "请回复该朋友圈一条15字以内的评论，语气要极其符合人设。" },
                                 { role: "user", content: `朋友圈内容: ${postContent}` }
                             ]
                         })
@@ -129,14 +129,14 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
                     const data = await response.json();
                     const text = data.choices[0].message.content.trim().replace(/^"|"$/g, '');
                     
-                    const newComment: Comment = { id: `c_ai_${Date.now()}_${leadId}`, userId: leadId, userName: lead.name, content: text, timestamp: Date.now() };
+                    const newComment: Comment = { id: `c_ai_${Date.now()}_${f.id}`, userId: f.id, userName: f.name, content: text, timestamp: Date.now() };
                     setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
                     setNotifications(prev => [{
-                        id: `notif_c_${Date.now()}_${leadId}`,
+                        id: `notif_c_${Date.now()}_${f.id}`,
                         type: 'comment',
-                        userId: leadId,
-                        userName: lead.name,
-                        userAvatar: lead.avatar,
+                        userId: f.id,
+                        userName: f.name,
+                        userAvatar: f.avatar,
                         postId,
                         content: text,
                         timestamp: Date.now(),
@@ -146,19 +146,9 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
             }, commentDelay);
         }
     });
-
-    // 2. 普通好友随机凑热闹 (20%概率)
-    const normalFriends = friendsList.filter(f => !MALE_LEADS.includes(f.id));
-    normalFriends.forEach(f => {
-        if (Math.random() < 0.15) {
-            setTimeout(() => {
-                setPosts(prev => prev.map(p => p.id === postId ? { ...p, likes: [...new Set([...p.likes, f.id])] } : p));
-            }, 15000 + Math.random() * 60000);
-        }
-    });
   }, [friendsList]);
 
-  // --- 刷新朋友圈：自动生成好友动态 ---
+  // --- 朋友圈内容刷新系统 ---
   const refreshMoments = useCallback(async () => {
     const apiKey = process.env.API_KEY;
     if (!apiKey || apiKey === 'undefined') {
@@ -166,28 +156,29 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
         return;
     }
 
-    // 随机选一个男主发朋友圈
-    const luckyLeadId = MALE_LEADS[Math.floor(Math.random() * MALE_LEADS.length)];
-    const lead = friendsList.find(f => f.id === luckyLeadId);
-    if (!lead) return;
+    // 随机挑选一个好友
+    const luckyFriend = friendsList[Math.floor(Math.random() * friendsList.length)];
+    const isLead = MALE_LEADS.includes(luckyFriend.id);
 
     try {
         const leadThemes: Record<string, string> = {
-            charlie_su: "医学研究、奢华生活、对完美事物的赞美",
-            sariel_qi: "大自然景观、设计草图、冷淡的职场观察",
-            osborn_xiao: "赛车轰鸣、深夜的城市街头、一份路边摊小吃",
-            evan_lu: "古籍阅读、深夜的办公室灯光、一杯红茶",
-            jesse_xia: "排练厅的汗水、童年的回忆、给粉丝的感谢"
+            charlie_su: "医学、奢侈生活、完美设计",
+            sariel_qi: "设计灵感、严苛要求、静谧景观",
+            osborn_xiao: "赛道激情、街头、信任与默契",
+            evan_lu: "咖啡、书籍、夜间的写字楼、权利与掌控",
+            jesse_xia: "舞台排练、青梅竹马、夕阳下的奔跑"
         };
+
+        const systemInstruction = isLead 
+            ? `你是微信好友"${luckyFriend.name}"。请发一条朋友圈动态。关于：${leadThemes[luckyFriend.id]}。字数20字左右，符合人设。`
+            : `你是普通微信好友"${luckyFriend.name}"。请发一条接地气的、口语化的、生活气息浓厚的朋友圈动态。如果是微商就发广告，如果是长辈就发养生或正能量。`;
 
         const response = await fetch("https://api.deepseek.com/chat/completions", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
             body: JSON.stringify({
                 model: "deepseek-chat",
-                messages: [
-                    { role: "system", content: `你是微信好友"${lead.name}"。请发一条朋友圈动态文案。主题关于：${leadThemes[luckyLeadId]}。字数20字左右，不要带表情。` }
-                ]
+                messages: [{ role: "system", content: systemInstruction }]
             })
         });
         const data = await response.json();
@@ -195,20 +186,23 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
         const newPost: Post = {
             id: `p_refresh_${Date.now()}`,
-            authorId: luckyLeadId,
+            authorId: luckyFriend.id,
             content: content,
-            images: [`https://loremflickr.com/400/300/luxury,city?lock=${Date.now() % 100}`],
+            images: [`https://loremflickr.com/400/300/lifestyle?lock=${Date.now() % 500}`],
             likes: [],
             comments: [],
             timestamp: Date.now()
         };
 
         setPosts(prev => [newPost, ...prev]);
-        // 男主互赞动态 (体现他们也互相认识)
+
+        // 随机增加一些点赞
         setTimeout(() => {
-            const otherLead = MALE_LEADS.find(id => id !== luckyLeadId);
-            if(otherLead) setPosts(prev => prev.map(p => p.id === newPost.id ? { ...p, likes: [otherLead] } : p));
-        }, 5000);
+            const voter = friendsList[Math.floor(Math.random() * friendsList.length)];
+            if (voter.id !== luckyFriend.id) {
+                setPosts(prev => prev.map(p => p.id === newPost.id ? { ...p, likes: [...new Set([...p.likes, voter.id])] } : p));
+            }
+        }, 15000);
 
     } catch (e) {
         console.error("Refresh Moments Error:", e);
@@ -226,7 +220,13 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   const addMessage = useCallback((msg: Message) => setMessages(prev => [msg, ...prev]), []);
   const updateMessage = useCallback((id: string, updates: Partial<Message>) => setMessages(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m)), []);
   const markAsRead = useCallback((targetId: string) => {
-    setMessages(prev => prev.map(m => (m.senderId === targetId && m.receiverId === currentUser.id && !m.read) ? { ...m, read: true } : m));
+    setMessages(prev => prev.map(m => {
+        // 私聊
+        if (m.senderId === targetId && m.receiverId === currentUser.id && !m.read) return { ...m, read: true };
+        // 群聊：作为接收者时进入即视为已读
+        if (m.receiverId === targetId && m.senderId !== currentUser.id && !m.read) return { ...m, read: true };
+        return m;
+    }));
   }, [currentUser.id]);
 
   const addFriend = (phone: string) => {
@@ -260,11 +260,15 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       const session = sessions[sessionId];
       if (session) {
           if (!session.lastMessage || msg.timestamp > session.lastMessage.timestamp) session.lastMessage = msg;
-          if (!msg.read && ((session.type === 'user' && msg.receiverId === currentUser.id) || (session.type === 'group' && msg.senderId !== currentUser.id))) session.unreadCount++;
+          // 未读数逻辑：我不是发送者且未读
+          if (!msg.read && ((session.type === 'user' && msg.receiverId === currentUser.id) || (session.type === 'group' && msg.senderId !== currentUser.id))) {
+              session.unreadCount++;
+          }
       }
     });
 
     return Object.values(sessions).sort((a, b) => {
+        // 男主置顶排序，然后再按时间
         const aLead = MALE_LEADS.includes(a.id) ? 1 : 0;
         const bLead = MALE_LEADS.includes(b.id) ? 1 : 0;
         if (aLead !== bLead) return bLead - aLead;

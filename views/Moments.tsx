@@ -133,9 +133,18 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                             <div className="flex flex-col">
                                 {notifications.map(notif => (
                                     <div key={notif.id} className="p-4 bg-white border-b border-gray-100 flex items-start active:bg-gray-50 transition-colors">
-                                        <img src={notif.userAvatar} className="w-10 h-10 rounded-md mr-3 object-cover shadow-sm cursor-pointer" onClick={() => { setShowNotifications(false); onNavigate({ type: 'USER_PROFILE', userId: notif.userId }); }} />
+                                        <img 
+                                            src={notif.userAvatar} 
+                                            className="w-10 h-10 rounded-md mr-3 object-cover shadow-sm cursor-pointer" 
+                                            onClick={() => { setShowNotifications(false); onNavigate({ type: 'USER_PROFILE', userId: notif.userId }); }} 
+                                        />
                                         <div className="flex-1">
-                                            <span className="text-[#576B95] font-bold text-sm block cursor-pointer" onClick={() => { setShowNotifications(false); onNavigate({ type: 'USER_PROFILE', userId: notif.userId }); }}>{notif.userName}</span>
+                                            <span 
+                                                className="text-[#576B95] font-bold text-sm block cursor-pointer hover:underline" 
+                                                onClick={() => { setShowNotifications(false); onNavigate({ type: 'USER_PROFILE', userId: notif.userId }); }}
+                                            >
+                                                {notif.userName}
+                                            </span>
                                             {notif.type === 'like' ? (
                                                 <p className="text-gray-600 text-sm mt-0.5">赞了你的动态 ❤️</p>
                                             ) : (
@@ -179,7 +188,7 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                              <div key={post.id} className="flex px-4 py-4 border-b border-gray-100 animate-fade-in">
                                  <img 
                                     src={author.avatar} 
-                                    className="w-10 h-10 rounded-md mr-3 cursor-pointer object-cover shadow-sm active:opacity-60" 
+                                    className="w-10 h-10 rounded-md mr-3 cursor-pointer object-cover shadow-sm active:opacity-60 transition-opacity" 
                                     onClick={() => onNavigate({ type: 'USER_PROFILE', userId: post.authorId })} 
                                 />
                                  <div className="flex-1">
@@ -243,9 +252,9 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
              )}
              <style>{`
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                .animate-spin { animation: spin 1s linear infinite; }
+                .animate-spin { animation: spin 1.2s linear infinite; }
                 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-                .animate-slide-up { animation: slideUp 0.2s ease-out; }
+                .animate-slide-up { animation: slideUp 0.15s ease-out; }
              `}</style>
         </div>
     )

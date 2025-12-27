@@ -48,7 +48,7 @@ const callDeepSeekAI = async (targetUser: any, currentUser: any, history: Messag
             body: JSON.stringify({
                 model: "deepseek-chat",
                 messages: [
-                    { role: "system", content: systemPrompt + " 回复字数30字以内，符合微信口语化习惯。" },
+                    { role: "system", content: systemPrompt + " 回复字数30字以内，符合微信口语化习惯。如果是普通朋友，回复要简单朴素。" },
                     ...history.slice(-6).map(m => ({ role: m.senderId === currentUser.id ? "user" : "assistant", content: m.content }))
                 ],
                 temperature: 0.8
@@ -57,7 +57,7 @@ const callDeepSeekAI = async (targetUser: any, currentUser: any, history: Messag
         const data = await response.json();
         return { text: data.choices[0].message.content };
     } catch (error) {
-        return { text: "网络信号暂时被我的魅力干扰了..." };
+        return { text: "网络信号暂时不稳定..." };
     }
 };
 
@@ -80,12 +80,12 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
       if (chatType === 'user' && history.length > 0) {
            const lastMsg = history[history.length - 1];
            if (lastMsg.senderId === currentUser.id) {
-               setTimeout(() => setIsTyping(true), 1000);
+               setTimeout(() => setIsTyping(true), 1200);
                callDeepSeekAI(targetUser, currentUser, history).then(({ text }) => {
                     setTimeout(() => {
                         setIsTyping(false);
                         addMessage({ id: Date.now().toString(), senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
-                    }, 1500 + Math.random() * 1000);
+                    }, 1000 + Math.random() * 2000);
                });
            }
       }
@@ -122,18 +122,18 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
               )}
               <div className={`max-w-[75%] px-3 py-2 text-[15px] rounded-md shadow-sm border relative ${getBubbleColor(msg.senderId, isMe)}`}>
                   {msg.type === 'red_packet' ? (
-                      <div className="flex flex-col w-48" onClick={() => alert(`已领取: ¥${msg.amount}`)}>
+                      <div className="flex flex-col w-48 overflow-hidden cursor-pointer" onClick={() => alert(`已领取: ¥${msg.amount}`)}>
                           <div className="bg-[#F89D3C] p-3 rounded-t-md flex items-center gap-3 text-white">
                               <div className="text-2xl opacity-90"><IconRedPacket /></div>
                               <div>
-                                  <div className="text-sm font-bold">{msg.content}</div>
+                                  <div className="text-sm font-bold truncate w-32">{msg.content}</div>
                                   <div className="text-[10px] opacity-80">领取红包</div>
                               </div>
                           </div>
                           <div className="bg-white p-1 px-3 text-[10px] text-gray-400 rounded-b-md">微信红包</div>
                       </div>
                   ) : msg.type === 'transfer' ? (
-                    <div className="flex flex-col w-48" onClick={() => alert(`转账详情: ¥${msg.amount}`)}>
+                    <div className="flex flex-col w-48 overflow-hidden cursor-pointer" onClick={() => alert(`转账详情: ¥${msg.amount}`)}>
                         <div className="bg-[#10AEFF] p-3 rounded-t-md flex items-center gap-3 text-white">
                             <div className="text-2xl opacity-90"><IconTransfer /></div>
                             <div>
@@ -183,38 +183,42 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
             )}
       </div>
 
-      {/* Emoji Menu */}
+      {/* Emoji Panel */}
       {showEmojiMenu && (
-        <div className="bg-[#EDEDED] h-64 overflow-y-auto p-4 grid grid-cols-8 gap-4 animate-slide-up border-t border-gray-200">
-          {EMOJIS.map(e => <button key={e} onClick={() => handleAddEmoji(e)} className="text-2xl active:bg-gray-200 rounded p-1">{e}</button>)}
+        <div className="bg-[#EDEDED] h-64 overflow-y-auto p-4 grid grid-cols-8 gap-4 animate-slide-up border-t border-gray-200 no-scrollbar">
+          {EMOJIS.map(e => <button key={e} onClick={() => handleAddEmoji(e)} className="text-2xl active:bg-gray-200 rounded p-1 transition-all">{e}</button>)}
         </div>
       )}
 
-      {/* Plus Menu (Tools) */}
+      {/* Tools Panel */}
       {showPlusMenu && (
         <div className="bg-[#EDEDED] h-64 p-6 grid grid-cols-4 gap-6 animate-slide-up border-t border-gray-200">
           <div onClick={() => onNavigate({ type: 'MONEY_RED_PACKET', userId: id })} className="flex flex-col items-center gap-2 cursor-pointer active:opacity-60">
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-orange-500 shadow-sm border border-gray-100">
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-[#F89D3C] shadow-sm border border-gray-100">
                <IconRedPacket />
             </div>
-            <span className="text-xs text-gray-500">红包</span>
+            <span className="text-[11px] text-gray-500">红包</span>
           </div>
           <div onClick={() => onNavigate({ type: 'MONEY_TRANSFER', userId: id })} className="flex flex-col items-center gap-2 cursor-pointer active:opacity-60">
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-blue-500 shadow-sm border border-gray-100">
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-[#10AEFF] shadow-sm border border-gray-100">
                <IconTransfer />
             </div>
-            <span className="text-xs text-gray-500">转账</span>
+            <span className="text-[11px] text-gray-500">转账</span>
           </div>
           <div className="flex flex-col items-center gap-2 opacity-40 cursor-not-allowed">
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-400">📷</div>
-            <span className="text-xs text-gray-500">拍摄</span>
+            <span className="text-[11px] text-gray-500">拍摄</span>
           </div>
           <div className="flex flex-col items-center gap-2 opacity-40 cursor-not-allowed">
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-gray-400">🖼️</div>
-            <span className="text-xs text-gray-500">照片</span>
+            <span className="text-[11px] text-gray-500">相册</span>
           </div>
         </div>
       )}
+      <style>{`
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.15s ease-out; }
+      `}</style>
     </div>
   );
 };
