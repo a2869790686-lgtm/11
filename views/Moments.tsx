@@ -133,15 +133,11 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                     <div className="absolute right-0 top-0 bottom-0 w-80 bg-[#EDEDED] shadow-xl flex flex-col animate-slide-left" onClick={e => e.stopPropagation()}>
                         <div className="p-4 bg-white border-b font-bold flex justify-between items-center">互动消息 <button onClick={() => setShowNotifications(false)}>✕</button></div>
                         <ScrollArea className="flex-1">
-                            {notifications.length === 0 ? <div className="p-10 text-center text-gray-400">暂无互动</div> : notifications.map(n => (
-                                <div key={n.id} className="p-4 bg-white border-b flex gap-3">
-                                    <img 
-                                        src={n.userAvatar} 
-                                        className="w-10 h-10 rounded cursor-pointer" 
-                                        onClick={() => onNavigate({ type: 'USER_PROFILE', userId: n.userId })} 
-                                    />
-                                    <div>
-                                        <p className="text-[#576B95] font-bold text-sm cursor-pointer" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: n.userId })}>{n.userName}</p>
+                            {notifications.length === 0 ? <div className="p-10 text-center text-gray-400 font-light">暂无互动</div> : notifications.map(n => (
+                                <div key={n.id} className="p-4 bg-white border-b flex gap-3 active:bg-gray-50 cursor-pointer" onClick={() => onNavigate({ type: 'USER_PROFILE', userId: n.userId })}>
+                                    <img src={n.userAvatar} className="w-10 h-10 rounded shadow-sm" />
+                                    <div className="flex-1">
+                                        <p className="text-[#576B95] font-bold text-sm">{n.userName}</p>
                                         <p className="text-gray-600 text-sm mt-1">{n.type === 'like' ? '赞了你的动态 ❤️' : n.content}</p>
                                         <p className="text-gray-300 text-[10px] mt-1">{timeAgo(n.timestamp)}</p>
                                     </div>
@@ -184,7 +180,7 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                              <div key={post.id} className="flex px-4 py-4 border-b border-gray-50">
                                  <img 
                                     src={author.avatar} 
-                                    className="w-11 h-11 rounded-md mr-3 cursor-pointer object-cover" 
+                                    className="w-11 h-11 rounded-md mr-3 cursor-pointer object-cover shadow-sm bg-gray-100" 
                                     onClick={() => onNavigate({ type: 'USER_PROFILE', userId: post.authorId })} 
                                  />
                                  <div className="flex-1 min-w-0">
@@ -194,10 +190,10 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                                      >
                                         {author.remark || author.name}
                                      </h4>
-                                     <p className={`text-base text-black mb-2 leading-relaxed whitespace-pre-wrap ${isMaleLead ? 'font-light italic text-gray-700 bg-gray-50 p-2 rounded' : ''}`}>{post.content}</p>
+                                     <p className={`text-base text-black mb-2 leading-relaxed whitespace-pre-wrap ${isMaleLead ? 'font-light italic text-gray-700 bg-gray-50 p-2 rounded border border-gray-100' : ''}`}>{post.content}</p>
                                      {post.images.length > 0 && (
                                          <div className={`grid gap-1 mb-2 ${post.images.length === 1 ? 'grid-cols-1 max-w-[220px]' : 'grid-cols-3 max-w-[300px]'}`}>
-                                             {post.images.map((img, i) => <img key={i} src={img} className="w-full h-full object-cover rounded shadow-sm" />)}
+                                             {post.images.map((img, i) => <img key={i} src={img} className="w-full h-full object-cover rounded shadow-sm bg-gray-50" />)}
                                          </div>
                                      )}
                                      <div className="flex justify-between items-center mt-2 relative">
@@ -228,7 +224,7 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                                                  <div className={`flex items-start gap-1 ${post.comments.length > 0 ? 'border-b border-gray-200 pb-1 mb-1' : ''}`}>
                                                      <span className="text-[#576B95] text-xs pt-0.5">❤️</span>
                                                      <span className="text-[#576B95] text-sm font-bold flex-1">
-                                                         {post.likes.map(id => getUser(id)?.name).join(', ')}
+                                                         {post.likes.map(id => getUser(id)?.name || '朋友').join(', ')}
                                                      </span>
                                                  </div>
                                              )}
@@ -240,7 +236,7 @@ export const Moments = ({ onBack, onNavigate }: { onBack: () => void, onNavigate
                                                      >
                                                         {comment.userName}: 
                                                      </span>
-                                                     <span className="text-black">{comment.content}</span>
+                                                     <span className="text-black ml-1">{comment.content}</span>
                                                  </div>
                                              ))}
                                          </div>
@@ -292,7 +288,7 @@ export const UserMoments = ({ userId, onBack }: { userId: string, onBack: () => 
                         <p className="text-gray-400 text-sm italic line-clamp-2">{user?.signature}</p>
                     </div>
                 </div>
-                {userPosts.length === 0 ? <div className="text-center py-10 text-gray-400">暂无动态</div> : userPosts.map(post => (
+                {userPosts.length === 0 ? <div className="text-center py-10 text-gray-400 font-light">暂无动态</div> : userPosts.map(post => (
                     <div key={post.id} className="flex gap-4 mb-6">
                         <div className="w-16 shrink-0">
                             <p className="text-2xl font-bold">{new Date(post.timestamp).getDate()}</p>

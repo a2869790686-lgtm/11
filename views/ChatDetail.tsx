@@ -4,6 +4,7 @@ import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
 import { Header } from '../components/Layout';
 import { IconVoice, IconKeyboard, IconMore, IconPlus, IconFace, IconRedPacket, IconTransfer } from '../components/Icons';
+import { GoogleGenAI } from "@google/genai";
 
 interface ChatDetailProps {
   id: string;
@@ -45,7 +46,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
   useEffect(() => { markAsRead(id); }, [id, history.length, markAsRead]);
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [history, isTyping]);
 
-  // --- 调用真正的 DeepSeek 接口进行智能回复 ---
+  // --- Use Gemini API for smart conversation reply ---
   const triggerAiReply = async (userMsg: string) => {
     if (chatType !== 'user') return;
     setIsTyping(true);
@@ -54,29 +55,27 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
     const persona = DEEPSEEK_PERSONAS[id] || `你是好友${targetUser?.name}。`;
     
     try {
-        const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: "deepseek-chat",
-                messages: [
-                    { role: "system", content: `${persona} 正在微信聊天。回复要短，极其口语化，不要包含任何AI助手的痕迹。20字以内。` },
-                    { role: "user", content: userMsg }
-                ],
-                temperature: 0.9
-            })
+        const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: `设定：${persona}
+场景：正在微信聊天。
+对方说：“${userMsg}”
+回复要求：极其口语化，像真人回复，不要包含任何AI助手的迹象。字数限制在20字以内。`,
+            config: {
+                temperature: 0.9,
+                topK: 64,
+                topP: 0.95
+            }
         });
-        const data = await response.json();
-        const text = data.choices?.[0]?.message?.content?.trim() || "收到，回头聊。";
+        const text = response.text?.trim() || "收到，回头聊。";
         
         setTimeout(() => {
             setIsTyping(false);
             addMessage({ id: Date.now().toString(), senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
         }, 1200 + Math.random() * 2000);
     } catch (e) {
+        console.error("Gemini API Error:", e);
         setIsTyping(false);
     }
   };

@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Header, ScrollArea } from '../components/Layout';
 import { useStore } from '../hooks/useStore';
@@ -14,7 +13,7 @@ interface ChatInfoProps {
 }
 
 export const ChatInfo = ({ id, chatType, onBack, onNavigate }: ChatInfoProps) => {
-  const { groups, friends, getUser, currentUser } = useStore();
+  const { groups, friends, getUser, currentUser, stickyChatIds, toggleStickyChat } = useStore();
 
   let members: string[] = [];
   let name = '';
@@ -31,6 +30,8 @@ export const ChatInfo = ({ id, chatType, onBack, onNavigate }: ChatInfoProps) =>
       const friend = friends.find(f => f.id === id);
       name = friend?.name || 'Chat Info';
   }
+
+  const isSticky = stickyChatIds.includes(id);
 
   return (
       <div className="flex flex-col h-full bg-[#EDEDED]">
@@ -66,10 +67,6 @@ export const ChatInfo = ({ id, chatType, onBack, onNavigate }: ChatInfoProps) =>
                        <span className="text-base text-black">QR Code</span>
                        <span className="text-gray-400 text-sm"> &gt;</span>
                    </div>
-                   <div className="px-4 py-3 border-b border-gray-100 flex justify-between">
-                       <span className="text-base text-black">Remarks</span>
-                       <span className="text-gray-400 text-sm"> &gt;</span>
-                   </div>
               </div>
 
               <div className="bg-white mb-2">
@@ -78,12 +75,17 @@ export const ChatInfo = ({ id, chatType, onBack, onNavigate }: ChatInfoProps) =>
                        <div className="w-10 h-6 bg-gray-300 rounded-full relative"><div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow"></div></div>
                    </div>
                    <div className="px-4 py-3 border-t border-gray-100 flex justify-between items-center">
-                       <span className="text-base text-black">Sticky on Top</span>
-                       <div className="w-10 h-6 bg-gray-300 rounded-full relative"><div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 shadow"></div></div>
+                       <span className="text-base text-black">Sticky on Top (置顶聊天)</span>
+                       <div 
+                        onClick={() => toggleStickyChat(id)}
+                        className={`w-10 h-6 rounded-full relative transition-colors cursor-pointer ${isSticky ? 'bg-wechat-green' : 'bg-gray-300'}`}
+                       >
+                            <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-all ${isSticky ? 'left-[18px]' : 'left-0.5'}`}></div>
+                       </div>
                    </div>
               </div>
 
-              <div className="px-4 py-3 bg-white text-center text-red-500 text-base font-medium mb-8">
+              <div className="px-4 py-3 bg-white text-center text-red-500 text-base font-medium mb-8 cursor-pointer active:bg-gray-50">
                   {chatType === 'group' ? 'Delete and Leave' : 'Clear Chat History'}
               </div>
           </ScrollArea>
