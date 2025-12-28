@@ -69,9 +69,10 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   useEffect(() => localStorage.setItem('wx_notifications', JSON.stringify(notifications)), [notifications]);
   useEffect(() => localStorage.setItem('wx_sticky_chats', JSON.stringify(stickyChatIds)), [stickyChatIds]);
 
+  // 原生 DeepSeek API 调用架构
   const callAi = async (persona: string, userInput: string, context: string) => {
     const apiKey = process.env.API_KEY; 
-    if (!apiKey || apiKey === 'undefined') return "（对方正在输入中...）";
+    if (!apiKey || apiKey === 'undefined' || apiKey === "") return "（对方正在忙...）";
     
     try {
       const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
@@ -85,15 +86,14 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
           messages: [
             {
               role: "system",
-              content: `你正在微信聊天中扮演一个角色。\n你的设定：${persona}\n背景信息：${context}\n要求：极其口语化，像真人回复，不要包含任何AI助手的迹象。字数限制在25字以内。回复必须符合中国大陆社交习惯。`
+              content: `你正在微信中扮演一个角色。\n设定：${persona}\n背景：${context}\n要求：极其口语化，像真人回复。不要包含AI助手痕迹。回复限25字内。符合中国社交习惯。`
             },
             {
               role: "user",
               content: userInput
             }
           ],
-          temperature: 1.2,
-          max_tokens: 100
+          temperature: 1.2
         })
       });
 
@@ -101,7 +101,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       return data.choices[0].message.content.trim() || "嗯？";
     } catch (e) { 
       console.error("DeepSeek API Error:", e);
-      return "（信号不稳定...）"; 
+      return "（网络信号弱...）"; 
     }
   };
 
@@ -150,7 +150,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     }
 
     const persona = DEEPSEEK_PERSONAS[luckyFriend.id] || `你是${luckyFriend.name}。`;
-    const content = await callAi(persona, "发一条极其符合你性格的朋友圈动态，不要描述图片内容，像真人一样说话。", "朋友圈动态");
+    const content = await callAi(persona, "发一条性格极其鲜明的朋友圈动态，不要描述图片，像真人发动态一样。", "朋友圈");
     
     const newPost: Post = {
       id: `p_ds_${Date.now()}`, authorId: luckyFriend.id, content,
@@ -169,7 +169,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       const author = friendsList.find(f => f.id === post.authorId);
       if (author) {
         setTimeout(async () => {
-          const reply = await callAi(DEEPSEEK_PERSONAS[author.id] || `你是${author.name}`, content, `你在朋友圈发了“${post.content}”，对方评论了你，请回评。`);
+          const reply = await callAi(DEEPSEEK_PERSONAS[author.id] || `你是${author.name}`, content, `朋友圈回评：你的朋友圈是“${post.content}”，对方评论了“${content}”。`);
           const replyComment: Comment = { id: `cr_${Date.now()}`, userId: author.id, userName: author.name, content: reply, timestamp: Date.now() };
           setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, replyComment] } : p));
         }, 8000 + Math.random() * 10000);
@@ -179,17 +179,13 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
 
   const toggleStickyChat = useCallback((id: string) => {
     setStickyChatIds(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(sid => sid !== id);
-      } else {
-        return [id, ...prev];
-      }
+      if (prev.includes(id)) return prev.filter(sid => sid !== id);
+      return [id, ...prev];
     });
   }, []);
 
   const getChatSessions = useCallback(() => {
     const sessions: Record<string, ChatSession> = {};
-    // 核心逻辑：确保所有初始好友都出现在聊天列表中
     friendsList.forEach(f => { sessions[f.id] = { id: f.id, type: 'user', name: f.remark || f.name, avatar: f.avatar, lastMessage: null, unreadCount: 0 }; });
     
     messages.forEach(msg => {
@@ -204,13 +200,8 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return Object.values(sessions).sort((a, b) => {
       const aSticky = stickyChatIds.includes(a.id) ? 1 : 0;
       const bSticky = stickyChatIds.includes(b.id) ? 1 : 0;
-      
       if (aSticky !== bSticky) return bSticky - aSticky;
-      
-      // 次级排序：只要有未读消息，就在前面
       if (a.unreadCount !== b.unreadCount) return b.unreadCount > 0 ? -1 : 1;
-      
-      // 末级排序：时间
       return (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0);
     });
   }, [messages, friendsList, currentUser.id, stickyChatIds]);

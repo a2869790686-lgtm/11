@@ -4,8 +4,6 @@ import { useStore } from '../hooks/useStore';
 import { ViewState, Message } from '../types';
 import { Header } from '../components/Layout';
 import { IconVoice, IconKeyboard, IconMore, IconPlus, IconFace, IconRedPacket, IconTransfer } from '../components/Icons';
-// Import GoogleGenAI
-import { GoogleGenAI } from "@google/genai";
 
 interface ChatDetailProps {
   id: string;
@@ -14,7 +12,7 @@ interface ChatDetailProps {
   onNavigate: (view: ViewState) => void;
 }
 
-const GEMINI_PERSONAS: Record<string, string> = {
+const DEEPSEEK_PERSONAS: Record<string, string> = {
   charlie_su: "你是查理苏，极其华丽且自恋的天才医生。你爱叫对方‘未婚妻’。",
   sariel_qi: "你是齐司礼，高冷的设计师。你叫对方‘笨鸟’。",
   osborn_xiao: "你是萧逸，赛车手。你叫对方‘小朋友’。",
@@ -47,34 +45,51 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
   useEffect(() => { markAsRead(id); }, [id, history.length, markAsRead]);
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [history, isTyping]);
 
-  // Use Gemini API for real-time reply
+  // 原生 DeepSeek API 实时回复
   const triggerAiReply = async (userMsg: string) => {
     if (chatType !== 'user') return;
     setIsTyping(true);
     
     const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined') {
+    if (!apiKey || apiKey === 'undefined' || apiKey === "") {
         setIsTyping(false);
         return;
     }
 
-    const persona = GEMINI_PERSONAS[id] || `你是好友${targetUser?.name}。`;
+    const persona = DEEPSEEK_PERSONAS[id] || `你是好友${targetUser?.name}。`;
     
     try {
-        const ai = new GoogleGenAI({ apiKey });
-        const response = await ai.models.generateContent({
-            model: "gemini-3-pro-preview",
-            contents: `设定：${persona}\n场景：正在微信聊天。\n对方说：“${userMsg}”\n回复要求：极其口语化，像真人回复，不要包含任何AI助手的迹象。字数限制在20字以内。`
+        const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [
+                {
+                  role: "system",
+                  content: `设定：${persona}\n场景：微信聊天中。\n回复要求：极其口语化，像真人回复。字数限20字内。对方说：“${userMsg}”`
+                },
+                {
+                  role: "user",
+                  content: userMsg
+                }
+              ],
+              temperature: 1.1
+            })
         });
 
-        const text = response.text?.trim() || "收到，回头聊。";
+        const data = await response.json();
+        const text = data.choices[0].message.content.trim() || "嗯。";
         
         setTimeout(() => {
             setIsTyping(false);
             addMessage({ id: Date.now().toString(), senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
         }, 800 + Math.random() * 1200);
     } catch (e) {
-        console.error("Gemini API Error:", e);
+        console.error("DeepSeek API Error:", e);
         setIsTyping(false);
     }
   };
