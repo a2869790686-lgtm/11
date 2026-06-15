@@ -39,8 +39,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const targetUser = getUser(id);
-  const history = getChatHistory(id, chatType === 'group');
+  const targetUser = getUser(id);  const history = getChatHistory(id, chatType === 'group');
 
   useEffect(() => { markAsRead(id); }, [id, history.length, markAsRead]);
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [history, isTyping]);
@@ -81,8 +80,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
             })
         });
 
-        const data = await response.json();
-        const text = data.choices[0].message.content.trim() || "嗯。";
+        const data = await response.json();        const text = data.choices[0].message.content.trim() || "嗯。";
         
         setTimeout(() => {
             setIsTyping(false);
@@ -123,8 +121,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
                   {msg.content}
                   <div className={`absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent 
                       ${isMe ? 'border-l-[6px] border-l-wechat-bubble -right-[5px]' : `border-r-[6px] border-r-inherit -left-[5px]`}`} />
-              </div>
-              {isMe && (
+              </div>              {isMe && (
                 <img 
                     src={currentUser.avatar} 
                     className="w-10 h-10 rounded-md ml-2 object-cover bg-gray-200 cursor-pointer" 
@@ -138,7 +135,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
 
       <div className="bg-[#F7F7F7] border-t px-2 py-2 flex items-center gap-2 pb-[env(safe-area-inset-bottom)] shrink-0">
             <button className="p-1"><IconVoice /></button>
-            <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 outline-none text-[15px]" />
+            <input type="text" value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-2 outline-none text-[15px] max-sm:text-base" />
             <button className="p-1"><IconFace /></button>
             {inputText.trim() ? (
                 <button onClick={handleSend} className="bg-wechat-green text-white px-4 py-1.5 rounded-md text-sm font-medium">发送</button>
