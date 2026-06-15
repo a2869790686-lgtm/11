@@ -26,31 +26,16 @@
           }
         }
       }
-    </script>
-    <style>
-      /* Hide scrollbar for Chrome, Safari and Opera */
-      .no-scrollbar::-webkit-scrollbar {
-          display: none;
+    </script>    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      body { margin: 0; overflow: hidden; background-color: #fff; }
+      #root { height: 100dvh; width: 100vw; }
+      @media (min-width: 1024px) {
+        body { background-color: #111; }
+        #root { display: flex; justify-content: center; background-color: #111; }
       }
-      /* Hide scrollbar for IE, Edge and Firefox */
-      .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-      }
-      body {
-        background-color: #111;
-        overflow: hidden; 
-        margin: 0;
-      }
-      #root {
-        height: 100vh;
-        width: 100vw;
-        display: flex;
-        justify-content: center;
-        background-color: #111;
-      }
-    </style>
-<script type="importmap">
+    </style><script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
