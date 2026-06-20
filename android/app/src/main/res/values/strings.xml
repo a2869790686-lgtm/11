@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WeChat Clone</string>
+    <string name="title_activity_main">WeChat Clone</string>
+    <string name="package_name">com.wechatclone.app</string>
+    <string name="custom_url_scheme">com.wechatclone.app</string>
+</resources>

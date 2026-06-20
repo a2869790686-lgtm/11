@@ -59,6 +59,14 @@ export const Settings = ({ onNavigate, onBack }: { onNavigate: (v: ViewState) =>
                 </div>
 
                  <div className="mt-2">
+
+                <div className="mt-2">
+                    <SettingsItem
+                        label="AI 接口设置"
+                        value="DeepSeek API"
+                        onClick={() => onNavigate({ type: 'SETTINGS_API_KEY' })}
+                    />
+                </div>
                     <SettingsItem label={t('switch_account')} />
                 </div>
 
@@ -102,6 +110,92 @@ export const SettingsGeneral = ({ onBack, onNavigate }: { onBack: () => void, on
         </div>
     );
 }
+
+
+
+export const ApiKeySettings = ({ onBack }: { onBack: () => void }) => {
+    const [key, setKey] = React.useState(() => localStorage.getItem('wx_deepseek_api_key') || '');
+    const [show, setShow] = React.useState(false);
+    const [saved, setSaved] = React.useState(false);
+
+    const handleSave = () => {
+        if (key.trim()) {
+            localStorage.setItem('wx_deepseek_api_key', key.trim());
+        } else {
+            localStorage.removeItem('wx_deepseek_api_key');
+        }
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+    };
+
+    const handleClear = () => {
+        if (window.confirm('确定清除 API Key 吗？')) {
+            setKey('');
+            localStorage.removeItem('wx_deepseek_api_key');
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-[#EDEDED]">
+            <div className="flex items-center justify-between px-4 h-14 bg-[#EDEDED] shrink-0 border-b border-gray-200">
+                <button onClick={onBack} className="text-black text-base text-lg pl-1">{'←'}</button>
+                <span className="font-semibold text-lg">AI 接口设置</span>
+                <div className="w-8" />
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
+                        DeepSeek API Key
+                    </label>
+                    <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                        <input
+                            type={show ? "text" : "password"}
+                            value={key}
+                            onChange={(e) => setKey(e.target.value)}
+                            placeholder="请输入您的 DeepSeek API Key"
+                            className="flex-1 px-3 py-2.5 text-base outline-none border-none"
+                        />
+                        <button
+                            onClick={() => setShow(!show)}
+                            className="px-3 py-2.5 text-gray-500 hover:text-gray-700 text-lg"
+                        >
+                            {show ? '\u25cf' : '\u25cb'}
+                        </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                        登录 platform.deepseek.com 获取您的 API Key。密钥仅存储在您的手机本地。
+                    </p>
+                    <div className="flex gap-3 mt-4">
+                        <button
+                            onClick={handleSave}
+                            className="flex-1 py-2.5 bg-wechat-green text-white rounded-lg font-medium active:bg-green-600"
+                        >
+                            {saved ? '\u2713 保存成功' : '保存密钥'}
+                        </button>
+                        {key && (
+                            <button
+                                onClick={handleClear}
+                                className="py-2.5 px-4 bg-gray-100 text-gray-600 rounded-lg font-medium active:bg-gray-200"
+                            >
+                                清除
+                            </button>
+                        )}
+                    </div>
+                </div>
+                <div className="bg-white rounded-lg p-4 shadow-sm mt-3">
+                    <h3 className="text-sm font-medium text-gray-600 mb-2">常见问题</h3>
+                    <ul className="text-xs text-gray-500 space-y-1.5 list-disc pl-4">
+                        <li>确保 API Key 有足够的调用额度</li>
+                        <li>如果改变了密钥请重新保存</li>
+                        <li>每个聊天角色都会调用 API 回复</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export const LanguageSettings = ({ onBack }: { onBack: () => void }) => {
     const { language, setLanguage, t } = useStore();

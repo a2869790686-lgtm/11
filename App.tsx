@@ -1,7 +1,8 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StoreProvider, useStore } from './hooks/useStore';
+import { App as CapacitorApp } from '@capacitor/app';
 import { Screen } from './components/Layout';
 import { ChatList } from './views/ChatList';
 import { ContactList, AddFriend, UserProfile, SetRemark } from './views/ContactList';
@@ -13,7 +14,7 @@ import { ChatInfo } from './views/ChatInfo';
 import { GroupList } from './views/GroupList';
 import { Moments, UserMoments } from './views/Moments';
 import { Channels } from './views/Channels';
-import { Settings, SettingsGeneral, LanguageSettings } from './views/Settings';
+import { Settings, SettingsGeneral, LanguageSettings, ApiKeySettings } from './views/Settings';
 import { Services } from './views/Services';
 import { Favorites } from './views/Favorites';
 import { StickerGallery } from './views/StickerGallery';
@@ -51,13 +52,57 @@ const TabBar = ({ current, onSelect }: { current: string, onSelect: (view: ViewS
 const AppContent = () => {
   const [viewState, setViewState] = useState<ViewState>({ type: 'TAB_CHATS' });
   const [lastTab, setLastTab] = useState<ViewState>({ type: 'TAB_CHATS' });
+  const [navStack, setNavStack] = useState<ViewState[]>([]);
+  const navStackRef = useRef<ViewState[]>([]);
+  const touchStartX = useRef(0);
+  navStackRef.current = navStack;
 
   const handleNavigate = (newView: ViewState) => {
     if (newView.type.startsWith('TAB_')) {
+      setNavStack([]);
       setLastTab(newView);
+    } else if (viewState.type !== newView.type) {
+      setNavStack(prev => [...prev, viewState]);
     }
     setViewState(newView);
   };
+
+  const handleBack = useCallback(() => {
+    if (navStackRef.current.length > 0) {
+      const stack = [...navStackRef.current];
+      const prevView = stack.pop();
+      if (prevView) {
+        setNavStack(stack);
+        setViewState(prevView);
+      }
+    }
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const isTabPage = viewState.type.startsWith('TAB_');
+    if (isTabPage || navStackRef.current.length === 0) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (dx > 80 && touchStartX.current < 50) {
+      handleBack();
+    }
+  };
+
+  useEffect(() => {
+    let handler: any;
+    (async () => {
+      try {
+        const mod = await import('@capacitor/app');
+        handler = await mod.App.addListener('backButton', () => {
+          handleBack();
+        });
+      } catch(e) {}
+    })();
+    return () => { if (handler) handler.remove(); };
+  }, []);
 
   const renderView = () => {
     switch (viewState.type) {
@@ -97,6 +142,10 @@ const AppContent = () => {
         return <Settings onNavigate={handleNavigate} onBack={() => handleNavigate({ type: 'TAB_ME' })} />;
       case 'SETTINGS_GENERAL':
         return <SettingsGeneral onBack={() => handleNavigate({ type: 'SETTINGS' })} onNavigate={handleNavigate} />;
+      case 'SETTINGS_API_KEY':
+        return <ApiKeySettings onBack={handleBack} />;
+      case 'SETTINGS_API_KEY':
+        return <ApiKeySettings onBack={handleBack} />;
       case 'SETTINGS_LANGUAGE':
         return <LanguageSettings onBack={() => handleNavigate({ type: 'SETTINGS_GENERAL' })} />;
       case 'SERVICES':
@@ -140,7 +189,7 @@ const AppContent = () => {
 
   return (
     <Screen>
-      <div className="flex-1 flex flex-col overflow-hidden relative bg-wechat-bg">
+      <div className="flex-1 flex flex-col overflow-hidden relative bg-wechat-bg" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {renderView()}
       </div>
       {isTab && <TabBar current={viewState.type} onSelect={handleNavigate} />}

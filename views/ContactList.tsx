@@ -74,37 +74,102 @@ export const ContactList = ({ onNavigate }: ContactListProps) => {
 };
 
 export const AddFriend = ({ onBack }: { onBack: () => void }) => {
-    const { addFriend } = useStore();
-    const [phone, setPhone] = useState('');
-    const [status, setStatus] = useState<'idle' | 'success' | 'fail'>('idle');
+    const { addRandomFriend, addCustomFriend } = useStore();
+    const [mode, setMode] = React.useState<'random' | 'custom'>('random');
+    const [loading, setLoading] = React.useState(false);
+    const [newFriend, setNewFriend] = React.useState(null);
+    const [statusText, setStatusText] = React.useState('');
+    const [cName, setCName] = React.useState('');
+    const [cGender, setCGender] = React.useState('male');
+    const [cIdentity, setCIdentity] = React.useState('');
+    const [cStyle, setCStyle] = React.useState('');
 
-    const handleAdd = () => {
-        if (phone.length < 3) return;
-        const success = addFriend(phone);
-        setStatus(success ? 'success' : 'fail');
-        if (success) setTimeout(onBack, 1000);
+    const handleRandom = async () => {
+      setLoading(true);
+      setStatusText('\u751f\u6210\u4e2d...');
+      try {
+        const friend = await addRandomFriend();
+        setNewFriend(friend);
+        setStatusText('\u6210\u529f\uff01');
+      } catch(e) { setStatusText('\u5931\u8d25'); }
+      setLoading(false);
     };
 
-    return (
-        <div className="flex flex-col h-full bg-wechat-bg">
-            <Header title="Add Contacts" onBack={onBack} />
-            <div className="p-4">
-               <div className="bg-white rounded-md flex items-center px-3 py-2">
-                   <span className="text-gray-900 mr-2 w-6 text-center text-lg">🔍</span>
-                   <input autoFocus type="tel" className="flex-1 outline-none text-base" placeholder="Account/Mobile Number" value={phone} onChange={(e) => setPhone(e.target.value)} />
-               </div>
-               {phone.length > 0 && (
-                 <div onClick={handleAdd} className="mt-4 bg-white p-4 flex items-center border-b border-gray-100 active:bg-gray-50 cursor-pointer">
-                    <div className="w-10 h-10 bg-wechat-green rounded-md flex items-center justify-center text-white mr-3"><IconPlus /></div>
-                    <div><p className="text-base text-black">Search: <span className="text-wechat-green">{phone}</span></p></div>
-                 </div>
-               )}
-               {status === 'success' && <div className="mt-4 text-center text-wechat-green bg-green-100 p-2 rounded">Friend Added!</div>}
-               {status === 'fail' && <div className="mt-4 text-center text-red-500">User already in contacts</div>}
-            </div>
-        </div>
+    const handleCustom = async () => {
+      if (!cName.trim()) return;
+      setLoading(true);
+      setStatusText('\u751f\u6210\u4eba\u8bbe...');
+      try {
+        const friend = await addCustomFriend({ name: cName, gender: cGender, identity: cIdentity || '\u666e\u901a\u4eba', speakingStyle: cStyle || '\u6b63\u5e38' });
+        setNewFriend(friend);
+        setStatusText('\u6210\u529f\uff01');
+      } catch(e) { setStatusText('\u5931\u8d25'); }
+      setLoading(false);
+    };
+
+    const TabBtn = ({ v, l }: any) => (
+      <button onClick={() => { setMode(v); setNewFriend(null); setStatusText(''); }}
+        className={`flex-1 py-2.5 text-center text-sm font-medium border-b-2 ${mode === v ? 'border-wechat-green text-wechat-green' : 'border-transparent text-gray-500'}`}>{l}</button>
     );
-}
+
+    return (
+      <div className="flex flex-col h-full bg-wechat-bg">
+        <div className="flex items-center px-4 h-14 bg-[#EDEDED] shrink-0 border-b border-gray-200">
+          <button onClick={onBack} className="text-black text-base mr-4">\u2190</button>
+          <span className="font-semibold text-lg">\u6dfb\u52a0\u597d\u53cb</span>
+        </div>
+        <div className="flex bg-white border-b border-gray-200">
+          <TabBtn v="random" l="\u968f\u673a\u6dfb\u52a0" />
+          <TabBtn v="custom" l="\u81ea\u5b9a\u4e49\u6dfb\u52a0" />
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          {mode === 'random' && (
+            <div className="bg-white rounded-lg p-6 text-center shadow-sm">
+              <p className="text-5xl mb-4">\ud83c\udfb2</p>
+              <p className="text-sm text-gray-500 mb-4">\u70b9\u51fb\u6309\u94ae\u968f\u673a\u751f\u6210\u5168\u65b0\u597d\u53cb</p>
+              {!newFriend && !loading && (
+                <button onClick={handleRandom} className="bg-wechat-green text-white px-8 py-3 rounded-lg font-medium">\ud83c\udfb2 \u968f\u673a\u751f\u6210</button>
+              )}
+              {loading && <p className="text-gray-500">{statusText}</p>}
+              {newFriend && (
+                <div>
+                  <img src={newFriend.avatar} className="w-16 h-16 rounded-full mx-auto mb-2" />
+                  <h3 className="font-bold">{newFriend.name}</h3>
+                  <p className="text-xs text-gray-400 mb-3">{newFriend.wxid}</p>
+                  <button onClick={() => { if (newFriend) onBack(); }} className="bg-wechat-green text-white px-6 py-2 rounded-lg font-medium">\u786e\u5b9a\u6dfb\u52a0</button>
+                </div>
+              )}
+            </div>
+          )}
+          {mode === 'custom' && (
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <p className="text-3xl text-center mb-3">\ud83d\udcdd</p>
+              <input value={cName} onChange={e => setCName(e.target.value)} placeholder="\u59d3\u540d *" className="w-full border rounded-lg px-3 py-2 mb-2 text-base" />
+              <select value={cGender} onChange={e => setCGender(e.target.value)} className="w-full border rounded-lg px-3 py-2 mb-2 text-base bg-white">
+                <option value="male">\u7537</option>
+                <option value="female">\u5973</option>
+                <option value="other">\u5176\u4ed6</option>
+              </select>
+              <input value={cIdentity} onChange={e => setCIdentity(e.target.value)} placeholder="\u8eab\u4efd/\u804c\u4e1a" className="w-full border rounded-lg px-3 py-2 mb-2 text-base" />
+              <textarea value={cStyle} onChange={e => setCStyle(e.target.value)} placeholder="\u8bf4\u8bdd\u98ce\u683c" rows={2} className="w-full border rounded-lg px-3 py-2 mb-3 text-base resize-none" />
+              {!newFriend && (
+                <button onClick={handleCustom} disabled={loading || !cName.trim()} className="w-full py-2.5 bg-wechat-green text-white rounded-lg font-medium disabled:bg-gray-300">
+                  {loading ? '\u751f\u6210\u4e2d...' : '\u751f\u6210\u5e76\u6dfb\u52a0'}
+                </button>
+              )}
+              {loading && <p className="text-center text-gray-500 mt-2">{statusText}</p>}
+              {newFriend && (
+                <div className="text-center">
+                  <p className="text-green-600 font-medium mb-2">\u6dfb\u52a0\u6210\u529f\uff01</p>
+                  <button onClick={() => onBack()} className="bg-wechat-green text-white px-6 py-2 rounded-lg font-medium">\u5b8c\u6210</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+};
 
 export const UserProfile = ({ userId, onBack, onNavigate }: { userId: string, onBack: () => void, onNavigate: (v: ViewState) => void }) => {
     const { friends, deleteFriend, currentUser, getUser, t, language } = useStore();

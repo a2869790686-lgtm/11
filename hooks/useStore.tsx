@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode, useRef } from 'react';
-import { User, Message, Post, ChatSession, Comment, Group, Notification } from '../types';
+import { User, Message, Post, ChatSession, Comment, Group, Notification, CustomFriendData } from '../types';
 import { INITIAL_FRIENDS, MOCK_POSTS_INITIAL, CURRENT_USER, MOCK_GROUPS, TRANSLATIONS, GENERATE_INITIAL_MESSAGES } from '../constants';
 
 const MALE_LEADS = ['charlie_su', 'sariel_qi', 'osborn_xiao', 'evan_lu', 'jesse_xia'];
@@ -60,6 +60,11 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     return saved ? JSON.parse(saved) : MALE_LEADS;
   });
   
+  const [friendsPersonas, setFriendsPersonas] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('wx_friend_personas');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const refreshCount = useRef(0);
 
   useEffect(() => localStorage.setItem('wx_current_user', JSON.stringify(currentUser)), [currentUser]);
@@ -68,10 +73,11 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
   useEffect(() => localStorage.setItem('wx_posts', JSON.stringify(posts)), [posts]);
   useEffect(() => localStorage.setItem('wx_notifications', JSON.stringify(notifications)), [notifications]);
   useEffect(() => localStorage.setItem('wx_sticky_chats', JSON.stringify(stickyChatIds)), [stickyChatIds]);
+  useEffect(() => localStorage.setItem('wx_friend_personas', JSON.stringify(friendsPersonas)), [friendsPersonas]);
 
   // 原生 DeepSeek API 调用架构
   const callAi = async (persona: string, userInput: string, context: string) => {
-    const apiKey = process.env.API_KEY; 
+    const apiKey = localStorage.getItem('wx_deepseek_api_key') || process.env.API_KEY; 
     if (!apiKey || apiKey === 'undefined' || apiKey === "") return "（对方正在忙...）";
     
     try {
@@ -105,6 +111,10 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     }
   };
 
+  const getPersona = useCallback((id: string) => {
+    return friendsPersonas[id] || DEEPSEEK_PERSONAS[id] || null;
+  }, [friendsPersonas]);
+
   const addPost = useCallback((content: string, images: string[]) => {
     const newId = `p_me_${Date.now()}`;
     const newPost: Post = { id: newId, authorId: currentUser.id, content, images, likes: [], comments: [], timestamp: Date.now() };
@@ -128,7 +138,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
     
     commenters.forEach((f, idx) => {
       setTimeout(async () => {
-        const persona = DEEPSEEK_PERSONAS[f.id] || `你是${f.name}，一个真实的微信好友。`;
+        const persona = getPersona(f.id) || `你是${f.name}，一个真实的微信好友。`;
         const reply = await callAi(persona, content, "我的好友发了朋友圈动态，我要去评论。");
         const newComment: Comment = { id: `c_auto_${f.id}_${Date.now()}`, userId: f.id, userName: f.name, content: reply, timestamp: Date.now() };
         setPosts(prev => prev.map(p => p.id === newId ? { ...p, comments: [...p.comments, newComment] } : p));
@@ -149,7 +159,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       luckyFriend = friendsList[Math.floor(Math.random() * friendsList.length)];
     }
 
-    const persona = DEEPSEEK_PERSONAS[luckyFriend.id] || `你是${luckyFriend.name}。`;
+    const persona = getPersona(luckyFriend.id) || `你是${luckyFriend.name}。`;
     const content = await callAi(persona, "发一条性格极其鲜明的朋友圈动态，不要描述图片，像真人发动态一样。", "朋友圈");
     
     const newPost: Post = {
@@ -169,13 +179,68 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       const author = friendsList.find(f => f.id === post.authorId);
       if (author) {
         setTimeout(async () => {
-          const reply = await callAi(DEEPSEEK_PERSONAS[author.id] || `你是${author.name}`, content, `朋友圈回评：你的朋友圈是“${post.content}”，对方评论了“${content}”。`);
+          const reply = await callAi(getPersona(author.id) || `你是${author.name}`, content, `朋友圈回评：你的朋友圈是“${post.content}”，对方评论了“${content}”。`);
           const replyComment: Comment = { id: `cr_${Date.now()}`, userId: author.id, userName: author.name, content: reply, timestamp: Date.now() };
           setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, replyComment] } : p));
         }, 8000 + Math.random() * 10000);
       }
     }
   }, [currentUser, friendsList, posts]);
+
+  const callAiDirect = async (prompt: string) => {
+    const apiKey = localStorage.getItem('wx_deepseek_api_key') || process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined' || apiKey === "") return null;
+    try {
+      const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }], temperature: 1.3 })
+      });
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content?.trim() || null;
+    } catch (e) { return null; }
+  };
+
+  const addRandomFriend = useCallback(async (): Promise<User> => {
+    const prompt = "\u968f\u673a\u751f\u6210\u4e00\u4e2a\u865a\u62df\u5fae\u4fe1\u597d\u53cb\u7684\u8eab\u4efd\uff0c\u8bf7\u4ee5JSON\u683c\u5f0f\u8f93\u51fa\uff1a\\n{\\n  \"name\": \"\u59d3\u540d\uff08\u4e2d\u6587\uff09\",\\n  \"gender\": \"male|female\",\\n  \"identity\": \"\u804c\u4e1a/\u8eab\u4efd\",\\n  \"personality\": \"\u6027\u683c\u63cf\u8ff0\uff0c50\u5b57\u4ee5\u5185\",\\n  \"speaking\": \"\u8bf4\u8bdd\u98ce\u683c\u63cf\u8ff0\uff0c30\u5b57\u4ee5\u5185\",\\n  \"wxid\": \"\u82f1\u6587\u5fae\u4fe1\u53f7\",\\n  \"signature\": \"\u4e2a\u6027\u7b7e\u540d\"," +
+    "\\n  \"avatarSeed\": \"\u5934\u50cf\u79cd\u5b50\uff08\u82f1\u6587\u5355\u8bcd\uff09\"\\n}\\n\u4ec5\u8f93\u51faJSON\uff0c\u4e0d\u8981\u5176\u4ed6\u6587\u5b57\u3002";
+    const jsonStr = await callAiDirect(prompt);
+    let data: any = {};
+    try { data = jsonStr ? JSON.parse(jsonStr) : {}; } catch(e) {
+      const match = jsonStr?.match(/\\{[\\s\\S]*\\}/);
+      if (match) try { data = JSON.parse(match[0]); } catch(e2) {}
+    }
+    const name = data.name || "\u65b0\u670b\u53cb";
+    const friendId = "gen_" + Date.now();
+    const newUser: User = {
+      id: friendId, name: name, avatar: data.avatarSeed ? `https://picsum.photos/seed/${data.avatarSeed}/200/200` : `https://picsum.photos/seed/${Math.random()}/200/200`,
+      phone: "1" + Math.floor(Math.random() * 10000000000).toString().padStart(10, "0"),
+      wxid: data.wxid || ("wx_" + Math.random().toString(36).slice(2, 8)),
+      signature: data.signature || "",
+    };
+    const personaText = (data.personality || "") + "\u3002" + (data.speaking || "");
+    const fullPersona = `${name}，${data.identity || "\u666e\u901a\u4eba"}\u3002${personaText}\u3002\u5bf9\u5f85\u597d\u53cb\u7684\u6001\u5ea6\uff1a`;
+    setFriendsPersonas(prev => ({ ...prev, [friendId]: fullPersona }));
+    setFriendsList(prev => [...prev, newUser]);
+    return newUser;
+  }, []);
+
+  const addCustomFriend = useCallback(async (data: CustomFriendData): Promise<User> => {
+    const friendId = "cus_" + Date.now();
+    const prompt = `\u4e3a\u5fae\u4fe1\u597d\u53cb\u751f\u6210\u4e00\u6bb5\u4eba\u8bbe\u63cf\u8ff0\uff0c\u7528\u4e8eAI\u804a\u5929\u89d2\u8272\u626e\u6f14\u3002\\n\u59d3\u540d\uff1a${data.name}\\n\u6027\u522b\uff1a${data.gender}\\n\u8eab\u4efd\uff1a${data.identity}\\n\u8bf4\u8bdd\u98ce\u683c\uff1a${data.speakingStyle}\\n\u8bf7\u751f\u621040-80\u5b57\u7684\u4eba\u8bbe\u63cf\u8ff0\uff0c\u5305\u542b\u5177\u4f53\u7684\u8bed\u6c14\u3001\u4e60\u60ef\u7528\u8bed\u3001\u5bf9\u5f85\u597d\u53cb\u7684\u6001\u5ea6\u3002`;
+    const personaText = await callAiDirect(prompt);
+    const avatar = data.avatar || `https://picsum.photos/seed/${Date.now()}/200/200`;
+    const newUser: User = {
+      id: friendId, name: data.name, avatar: avatar,
+      phone: "1" + Math.floor(Math.random() * 10000000000).toString().padStart(10, "0"),
+      wxid: data.name.toLowerCase().replace(/[^a-z0-9]/g, '_') + Math.random().toString(36).slice(2, 5),
+      signature: "",
+    };
+    const fullPersona = personaText || `${data.name}，${data.identity}。${data.speakingStyle}。`;
+    setFriendsPersonas(prev => ({ ...prev, [friendId]: fullPersona }));
+    setFriendsList(prev => [...prev, newUser]);
+    return newUser;
+  }, []);
 
   const toggleStickyChat = useCallback((id: string) => {
     setStickyChatIds(prev => {
@@ -219,7 +284,7 @@ export const StoreProvider = ({ children }: { children?: ReactNode }) => {
       updateMessage: (id, u) => setMessages(prev => prev.map(m => m.id === id ? {...m, ...u} : m)), markAsRead,
       addFriend: (p) => { const n: User = {id: `n_${Date.now()}`, name: `用户 ${p.slice(-4)}`, avatar: `https://picsum.photos/seed/${p}/200/200`, phone: p, wxid: `wx_${p}`}; setFriendsList(prev => [...prev, n]); return true; },
       deleteFriend: (id) => setFriendsList(prev => prev.filter(f => f.id !== id)), updateFriendRemark: (id, r) => setFriendsList(prev => prev.map(f => f.id === id ? {...f, remark: r} : f)),
-      addPost, refreshMoments, toggleLike, addComment, toggleStickyChat, markNotificationsAsRead: () => setNotifications(prev => prev.map(n => ({...n, read: true}))),
+      callAi, getPersona, addRandomFriend, addCustomFriend, addPost, refreshMoments, toggleLike, addComment, toggleStickyChat, markNotificationsAsRead: () => setNotifications(prev => prev.map(n => ({...n, read: true}))),
       getChatHistory, getChatSessions, getUser, t
     }}>
       {children}

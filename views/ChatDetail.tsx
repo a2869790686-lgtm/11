@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../hooks/useStore';
-import { ViewState, Message } from '../types';
+import { ViewState } from '../types';
 import { Header } from '../components/Layout';
 import { IconVoice, IconKeyboard, IconMore, IconPlus, IconFace, IconRedPacket, IconTransfer } from '../components/Icons';
 
@@ -11,14 +10,6 @@ interface ChatDetailProps {
   onBack: () => void;
   onNavigate: (view: ViewState) => void;
 }
-
-const DEEPSEEK_PERSONAS: Record<string, string> = {
-  charlie_su: "你是查理苏，极其华丽且自恋的天才医生。你爱叫对方‘未婚妻’。",
-  sariel_qi: "你是齐司礼，高冷的设计师。你叫对方‘笨鸟’。",
-  osborn_xiao: "你是萧逸，赛车手。你叫对方‘小朋友’。",
-  evan_lu: "你是陆沉，CEO。你叫对方‘我的女孩’。",
-  jesse_xia: "你是夏鸣星，偶像演员。你叫对方‘大小姐’。"
-};
 
 const getBubbleColor = (id: string, isMe: boolean) => {
   if (isMe) return 'bg-wechat-bubble border-transparent';
@@ -33,62 +24,35 @@ const getBubbleColor = (id: string, isMe: boolean) => {
 };
 
 export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps) => {
-  const { currentUser, getChatHistory, addMessage, markAsRead, getUser } = useStore();
+  const { currentUser, getChatHistory, addMessage, markAsRead, getUser, getPersona, callAi } = useStore();
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  const targetUser = getUser(id);  const history = getChatHistory(id, chatType === 'group');
+
+  const targetUser = getUser(id);
+  const history = getChatHistory(id, chatType === 'group');
 
   useEffect(() => { markAsRead(id); }, [id, history.length, markAsRead]);
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [history, isTyping]);
 
-  // 原生 DeepSeek API 实时回复
   const triggerAiReply = async (userMsg: string) => {
     if (chatType !== 'user') return;
     setIsTyping(true);
-    
-    const apiKey = process.env.API_KEY;
+    const apiKey = localStorage.getItem('wx_deepseek_api_key') || process.env.API_KEY;
     if (!apiKey || apiKey === 'undefined' || apiKey === "") {
-        setIsTyping(false);
-        return;
+      setIsTyping(false);
+      return;
     }
-
-    const persona = DEEPSEEK_PERSONAS[id] || `你是好友${targetUser?.name}。`;
-    
-    try {
-        const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-              model: "deepseek-chat",
-              messages: [
-                {
-                  role: "system",
-                  content: `设定：${persona}\n场景：微信聊天中。\n回复要求：极其口语化，像真人回复。字数限20字内。对方说：“${userMsg}”`
-                },
-                {
-                  role: "user",
-                  content: userMsg
-                }
-              ],
-              temperature: 1.1
-            })
-        });
-
-        const data = await response.json();        const text = data.choices[0].message.content.trim() || "嗯。";
-        
-        setTimeout(() => {
-            setIsTyping(false);
-            addMessage({ id: Date.now().toString(), senderId: id, receiverId: currentUser.id, content: text, type: 'text', timestamp: Date.now(), read: false });
-        }, 800 + Math.random() * 1200);
-    } catch (e) {
-        console.error("DeepSeek API Error:", e);
+    const persona = getPersona(id) || "You are a friend named " + (targetUser?.name || "someone") + ".";
+    const reply = await callAi(persona, userMsg, "微信聊天");
+    if (reply && !reply.includes("忙")) {
+      setTimeout(() => {
         setIsTyping(false);
+        addMessage({ id: Date.now().toString(), senderId: id, receiverId: currentUser.id, content: reply, type: 'text', timestamp: Date.now(), read: false });
+      }, 800 + Math.random() * 1200);
+    } else {
+      setIsTyping(false);
     }
   };
 
@@ -103,7 +67,7 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
   return (
     <div className="flex flex-col h-full bg-wechat-bg relative">
       <Header title={isTyping ? "对方正在输入..." : (targetUser?.name || "对话")} onBack={onBack} rightAction={<button onClick={() => onNavigate({ type: 'CHAT_INFO', id, chatType })}><IconMore /></button>} />
-      
+
       <div className="flex-1 overflow-y-auto p-4 no-scrollbar" ref={scrollRef}>
         {history.map(msg => {
           const isMe = msg.senderId === currentUser.id;
@@ -111,21 +75,22 @@ export const ChatDetail = ({ id, chatType, onBack, onNavigate }: ChatDetailProps
           return (
             <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} items-start mb-4`}>
               {!isMe && (
-                <img 
-                    src={sender?.avatar} 
-                    className="w-10 h-10 rounded-md mr-2 object-cover bg-gray-200 cursor-pointer" 
-                    onClick={() => onNavigate({ type: 'USER_PROFILE', userId: msg.senderId })} 
+                <img
+                    src={sender?.avatar}
+                    className="w-10 h-10 rounded-md mr-2 object-cover bg-gray-200 cursor-pointer"
+                    onClick={() => onNavigate({ type: 'USER_PROFILE', userId: msg.senderId })}
                 />
               )}
               <div className={`max-w-[75%] px-3 py-2 text-[15px] rounded-md shadow-sm border relative ${getBubbleColor(msg.senderId, isMe)}`}>
                   {msg.content}
-                  <div className={`absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent 
+                  <div className={`absolute top-3 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent
                       ${isMe ? 'border-l-[6px] border-l-wechat-bubble -right-[5px]' : `border-r-[6px] border-r-inherit -left-[5px]`}`} />
-              </div>              {isMe && (
-                <img 
-                    src={currentUser.avatar} 
-                    className="w-10 h-10 rounded-md ml-2 object-cover bg-gray-200 cursor-pointer" 
-                    onClick={() => onNavigate({ type: 'MY_PROFILE' })} 
+              </div>
+              {isMe && (
+                <img
+                    src={currentUser.avatar}
+                    className="w-10 h-10 rounded-md ml-2 object-cover bg-gray-200 cursor-pointer"
+                    onClick={() => onNavigate({ type: 'MY_PROFILE' })}
                 />
               )}
             </div>

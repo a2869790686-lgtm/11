@@ -106,4 +106,15 @@ export type ViewState =
   | { type: 'DISCOVER_ARTICLE', articleId: string }
   | { type: 'MONEY_RED_PACKET', userId: string }
   | { type: 'MONEY_TRANSFER', userId: string }
+ | { type: 'MONEY_CODE' };
+  | { type: 'SETTINGS_API_KEY' }
   | { type: 'MONEY_CODE' };
+
+
+export interface CustomFriendData {
+  name: string;
+  gender: 'male' | 'female' | 'other';
+  identity: string;
+  speakingStyle: string;
+  avatar?: string;
+}
